@@ -68,7 +68,6 @@
             display: flex; flex-direction: column; align-items: center; position: relative;
         }
 
-        /* 顶级黑金 3D 玻璃材质文字 */
         .text-black-gold {
             color: #1a1a1a; 
             font-weight: 900;
@@ -83,7 +82,6 @@
         .logo-3d { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 10px 0; font-size: 28px;}
         .logo-3d-mini { display: flex; align-items: center; gap: 6px; font-size: 20px;}
         
-        /* 高清可爱的太阳图标，彻底剥离阴影污染 */
         .cute-sun { width: 34px; height: 34px; filter: drop-shadow(0 4px 6px rgba(180, 80, 0, 0.3)); }
         .cute-sun-mini { width: 24px; height: 24px; filter: drop-shadow(0 2px 4px rgba(180, 80, 0, 0.3)); }
 
@@ -121,9 +119,8 @@
         .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
         .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.7) 0%, rgba(255, 90, 0, 0.3) 100%); border-top-color: rgba(255,200,100,0.9); color: #fff; }
 
-        /* 管理员面板确保开屏绝对隐藏 */
-        #admin-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        #admin-overlay .auth-card { max-width: 420px; padding: 40px 30px; }
+        #admin-overlay, #burn-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .auth-card-modal { max-width: 420px; padding: 40px 30px; }
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
@@ -259,12 +256,10 @@
 
     <div id="auth-overlay" class="overlay">
         <div class="auth-card glass-3d">
-            <!-- 黑金 3D 玻璃标题 + 可爱太阳 -->
             <div class="logo-3d text-black-gold">
                 <img src="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png" class="cute-sun" alt="太阳">
                 有点儿意思
             </div>
-            <!-- 精简对称文案，纯净无弹窗 -->
             <p>🪐 探索无界 · 发现奇趣 🛸</p>
             <input type="password" id="pwd-input" class="glass-input" placeholder="请输入访问密钥" autocomplete="off">
             <button id="pwd-btn" class="glass-btn">验证并进入</button>
@@ -285,9 +280,9 @@
         <textarea id="fullscreen-textarea" placeholder="在这里尽情挥洒你的长篇大论..."></textarea>
     </div>
 
-    <!-- 管理员专属通道：默认隐藏 display:none -->
+    <!-- 管理员专属通道 -->
     <div id="admin-overlay" class="overlay" style="display: none;">
-        <div class="auth-card glass-3d" style="padding: 35px 25px; max-width: 420px;">
+        <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('admin-overlay').style.display='none'">×</div>
             <h3 style="margin: 0 0 25px 0; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">管理员专属通道</h3>
             <textarea id="admin-text-input" class="glass-input" placeholder="输入全频位置顶公告 (支持5000字)" maxlength="5000" style="height: 120px; resize: none; text-align: left; padding: 18px; border-radius: 22px;"></textarea>
@@ -299,9 +294,22 @@
         </div>
     </div>
 
+    <!-- 焚毁密码弹窗 -->
+    <div id="burn-overlay" class="overlay" style="display: none;">
+        <div class="auth-card glass-3d auth-card-modal">
+            <div class="close-btn" onclick="document.getElementById('burn-overlay').style.display='none'">×</div>
+            <h3 style="margin: 0 0 20px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🔥 危险操作</h3>
+            <p style="margin-bottom: 25px; font-size: 14px; text-align: center; color: var(--text-main); opacity: 0.9;">此操作将彻底焚毁本地及云端的所有聊天记录，且不可逆转。</p>
+            <input type="password" id="burn-pwd-input" class="glass-input" placeholder="输入管理员密码" autocomplete="off" style="margin-bottom: 25px;">
+            <div class="btn-group">
+                <button class="glass-btn btn-cancel" style="flex: 1;" onclick="document.getElementById('burn-overlay').style.display='none'">取消</button>
+                <button id="burn-confirm-btn" class="glass-btn" style="flex: 1; color: #D96000;">确认焚毁</button>
+            </div>
+        </div>
+    </div>
+
     <div id="chat-container" class="glass-3d" style="background: rgba(255,255,255,0.15);">
         <div id="header">
-            <!-- 顶部小标题也应用黑金和可爱太阳 -->
             <div class="logo-3d-mini text-black-gold">
                 <img src="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png" class="cute-sun-mini" alt="太阳">
                 有点儿意思
@@ -316,7 +324,8 @@
             <div id="action-menu">
                 <div class="glass-btn icon-btn" id="open-emoji-btn" title="表情包">😊</div>
                 <div class="glass-btn icon-btn" id="send-img-btn" title="发送图片">📷</div>
-                <div class="glass-btn icon-btn" id="announce-btn" title="发布公告面板">📢</div>
+                <div class="glass-btn icon-btn" id="announce-btn" title="发布公告">📢</div>
+                <div class="glass-btn icon-btn" id="burn-btn" title="焚毁清屏" style="color: #D96000;">🔥</div>
             </div>
             
             <div id="emoji-panel"></div>
@@ -354,7 +363,7 @@
         document.getElementById('install-btn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; } deferredPrompt = null; } });
         window.addEventListener('appinstalled', () => { alert("🎉 应用已成功安装！"); document.getElementById('install-btn').style.display = 'none'; });
 
-        const SYSTEM_PEPPER = "SunChat_E2EE_V26_SuperSecure_Pepper_@2026!"; 
+        const SYSTEM_PEPPER = "SunChat_E2EE_V27_SuperSecure_Pepper_@2026!"; 
         const LIFESPAN_MS = (12 * 60 * 60 * 1000) + (1 * 60 * 1000); 
         
         let roomID = new URLSearchParams(window.location.search).get('room');
@@ -363,7 +372,9 @@
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?room=' + roomID;
             window.history.replaceState({path: newUrl}, '', newUrl);
         }
-        const TOPIC = "sun-e2ee-room-" + roomID; const TOPIC_ANNOUNCE = TOPIC + "-announce";
+        const TOPIC = "sun-e2ee-room-" + roomID; 
+        const TOPIC_ANNOUNCE = TOPIC + "-announce";
+        const TOPIC_HISTORY = TOPIC + "-history";
 
         const IdentityEngine = {
             adjs: ["摸鱼的", "熬夜的", "干饭的", "迷糊的", "傲娇的", "打工的", "快乐的", "神奇的", "暴富的", "躺平的", "吃瓜的", "硬核的"],
@@ -415,7 +426,6 @@
 
         let mqttClient; let currentUser; let localMessages = []; let announcements = []; let isUploadingAnnounceImg = false; 
 
-        // 默认自动唤醒的高标隐私本地通知
         function notifyNewMessage() {
             if (document.hidden && typeof Notification !== 'undefined' && Notification.permission === "granted") {
                 const n = new Notification("☀️ 有点儿意思", { 
@@ -462,7 +472,6 @@
             if (!pwd) { pwdInput.placeholder = '密码不可为空'; setTimeout(() => pwdInput.placeholder = '请输入访问密钥', 1500); return; }
             pwdBtn.innerText = "进入中..."; 
             
-            // 登录成功的一瞬间，系统默认直接请求开启后台通知守护
             if (typeof Notification !== 'undefined' && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
             }
@@ -495,58 +504,69 @@
             isUploadingAnnounceImg = true; document.getElementById('file-input').click();
         });
 
+        // 🔥 焚毁按钮逻辑更新为管理员密码验证
+        document.getElementById('burn-btn').addEventListener('click', () => {
+            actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)';
+            document.getElementById('burn-pwd-input').value = '';
+            document.getElementById('burn-overlay').style.display = 'flex';
+            document.getElementById('burn-pwd-input').focus();
+        });
+
+        document.getElementById('burn-confirm-btn').addEventListener('click', () => {
+            const pwd = document.getElementById('burn-pwd-input').value.trim();
+            if (pwd !== "5214") {
+                alert("管理员密码错误，无法执行焚毁。");
+                document.getElementById('burn-pwd-input').value = '';
+                return;
+            }
+            document.getElementById('burn-overlay').style.display = 'none';
+            localMessages = [];
+            document.getElementById('messages').innerHTML = '';
+            syncToStorage();
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.publish(TOPIC_HISTORY, "", { retain: true });
+            }
+            appendSysMessage('系统', '🔥 所有记录已彻底焚毁。');
+        });
+
         function connectMQTT() {
             appendSysMessage('系统', '正在连接隐秘通道...');
             mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: 'sun_' + Math.random().toString(16).substr(2, 8) });
             mqttClient.on('connect', () => { 
                 appendSysMessage('系统', '✨ 已建立私密直连。信息将于12小时后自动粉碎。'); 
-                mqttClient.subscribe(TOPIC); mqttClient.subscribe(TOPIC_ANNOUNCE); 
-                
-                // 点对点同步引擎：新用户上线，立刻向房间内发出隐形同步请求
-                setTimeout(async () => {
-                    const reqPayload = JSON.stringify({ type: 'sync_req', timestamp: Date.now() });
-                    const encryptedPayload = await CryptoService.encrypt(reqPayload);
-                    mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload }));
-                }, 800);
+                mqttClient.subscribe(TOPIC); 
+                mqttClient.subscribe(TOPIC_ANNOUNCE); 
+                mqttClient.subscribe(TOPIC_HISTORY); 
             });
 
             mqttClient.on('message', async (topic, message) => {
                 try {
+                    if (topic === TOPIC_HISTORY && message.length === 0) return;
+
                     const wrapper = JSON.parse(message.toString()); const decryptedData = await CryptoService.decrypt(wrapper.encryptedPayload); if (!decryptedData) return;
                     const payload = JSON.parse(decryptedData); if (Date.now() - payload.timestamp >= LIFESPAN_MS) return;
 
+                    if (topic === TOPIC_HISTORY) {
+                        if (payload.type === 'history_list') {
+                            let added = false;
+                            payload.content.forEach(remoteMsg => {
+                                const exists = localMessages.some(m => m.timestamp === remoteMsg.timestamp && m.senderData.name === remoteMsg.senderData.name);
+                                if (!exists && (Date.now() - remoteMsg.timestamp < LIFESPAN_MS)) {
+                                    localMessages.push(remoteMsg); added = true;
+                                }
+                            });
+                            if (added) {
+                                localMessages.sort((a,b) => a.timestamp - b.timestamp);
+                                document.getElementById('messages').innerHTML = ''; 
+                                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp));
+                                syncToStorage();
+                            }
+                        }
+                        return;
+                    }
+
                     if (topic === TOPIC_ANNOUNCE) { if (payload.type === 'announce_list') { announcements = payload.content; await syncToStorage(); renderAnnouncements(); notifyNewMessage();} return; }
                     if (wrapper.senderData && wrapper.senderData.name === currentUser.name) return; 
-
-                    // 点对点同步引擎：老用户收到请求，立刻在后台分享已加密的本地历史记录
-                    if (payload.type === 'sync_req') {
-                        if (localMessages.length > 0) {
-                            setTimeout(async () => {
-                                const ackPayload = JSON.stringify({ type: 'sync_ack', content: localMessages, timestamp: Date.now() });
-                                const encryptedAck = await CryptoService.encrypt(ackPayload);
-                                mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload: encryptedAck }));
-                            }, Math.random() * 600); // 轻微错峰发送防止拥堵
-                        }
-                        return;
-                    }
-
-                    // 点对点同步引擎：新用户收到历史记录，无缝拼接到本地
-                    if (payload.type === 'sync_ack') {
-                        let added = false;
-                        payload.content.forEach(remoteMsg => {
-                            const exists = localMessages.some(m => m.timestamp === remoteMsg.timestamp && m.senderData.name === remoteMsg.senderData.name);
-                            if (!exists && (Date.now() - remoteMsg.timestamp < LIFESPAN_MS)) {
-                                localMessages.push(remoteMsg); added = true;
-                            }
-                        });
-                        if (added) {
-                            localMessages.sort((a,b) => a.timestamp - b.timestamp);
-                            document.getElementById('messages').innerHTML = ''; // 清空重新按时间线渲染
-                            localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp));
-                            syncToStorage();
-                        }
-                        return;
-                    }
                     
                     let senderInfo = wrapper.senderData;
                     if (!senderInfo || typeof senderInfo === 'string') {
@@ -576,6 +596,10 @@
                 const internalPayload = JSON.stringify({ type: type, content: content, timestamp: ts });
                 const encryptedPayload = await CryptoService.encrypt(internalPayload);
                 mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload }));
+                
+                const historyPayload = JSON.stringify({ type: 'history_list', content: localMessages, timestamp: ts });
+                const encryptedHistory = await CryptoService.encrypt(historyPayload);
+                mqttClient.publish(TOPIC_HISTORY, JSON.stringify({ senderData: currentUser, encryptedPayload: encryptedHistory }), { retain: true });
             }
         }
 
