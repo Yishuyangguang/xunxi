@@ -105,20 +105,20 @@
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
-        /* 聊天主容器：精准向下偏移 44px（完美避开手机状态栏与微信顶栏），确保顶部的 Logo 和昵称百分百完全显示 */
+        /* 聊天主容器：精准向下偏移 64px（彻底避开微信沉浸式状态栏与各种手机刘海/灵动岛），让标题和昵称完整完美展现 */
         #chat-container { 
             display: none; 
             width: 100%; 
             max-width: 800px; 
-            height: calc(100dvh - 44px); 
-            max-height: calc(100dvh - 44px); 
+            height: calc(100dvh - 64px); 
+            max-height: calc(100dvh - 64px); 
             flex-direction: column; 
             position: relative; 
             border-radius: 28px; 
             overflow: hidden; 
             margin: auto; 
             box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6);
-            margin-top: 44px;
+            margin-top: 64px;
         }
         @media (min-width: 781px) { 
             #chat-container { 
