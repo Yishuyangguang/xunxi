@@ -125,8 +125,10 @@
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
         #chat-container { display: none; width: 100%; max-width: 800px; height: 92vh; max-height: 950px; flex-direction: column; position: relative; border-radius: 36px; overflow: hidden; margin: 0 auto; box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6);}
+        
+        /* 手机端完美贴合屏幕修复 (解除高度封印) */
         @media (max-width: 780px) { 
-            #chat-container { height: 100vh; height: 100dvh; width: 100vw; max-width: 100%; border-radius: 0; border: none; margin: 0; box-shadow: none;} 
+            #chat-container { height: 100vh; height: 100dvh; width: 100vw; max-width: 100%; max-height: 100dvh; border-radius: 0; border: none; margin: 0; box-shadow: none;} 
         }
         
         #header { padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.4); padding-top: max(16px, env(safe-area-inset-top)); background: rgba(255,255,255,0.15); z-index: 10;}
@@ -325,6 +327,8 @@
                 <div class="glass-btn icon-btn" id="open-emoji-btn" title="表情包">😊</div>
                 <div class="glass-btn icon-btn" id="send-img-btn" title="发送图片">📷</div>
                 <div class="glass-btn icon-btn" id="announce-btn" title="发布公告">📢</div>
+                <!-- 全屏按钮被移到这里，腾出宝贵的输入框横向空间 -->
+                <div class="glass-btn icon-btn" id="fullscreen-btn" title="全屏输入">⛶</div>
                 <div class="glass-btn icon-btn" id="burn-btn" title="焚毁清屏" style="color: #D96000;">🔥</div>
             </div>
             
@@ -332,8 +336,8 @@
 
             <div id="input-area">
                 <div class="glass-btn icon-btn" id="toggle-menu-btn" style="font-size: 24px; font-weight: 300;">+</div>
+                <!-- 彻底释放宽度的输入框 -->
                 <textarea id="msg-input" maxlength="3000" placeholder="发送奇思妙想..." rows="1"></textarea>
-                <div class="glass-btn icon-btn" id="fullscreen-btn" style="font-size: 18px;">⛶</div>
                 <div class="glass-btn" id="send-btn">发送</div>
                 <input type="file" id="file-input" accept="image/*">
             </div>
@@ -392,7 +396,7 @@
 
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         
-        msgInput.addEventListener('input', function() { this.style.height = '46px'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
+        msgInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
 
         toggleMenuBtn.addEventListener('click', () => {
             actionMenu.classList.toggle('active');
@@ -403,9 +407,9 @@
         document.getElementById('open-emoji-btn').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; const panel = document.getElementById('emoji-panel'); panel.style.display = panel.style.display === 'grid' ? 'none' : 'grid'; });
         document.getElementById('messages').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; document.getElementById('emoji-panel').style.display = 'none'; });
 
-        document.getElementById('fullscreen-btn').addEventListener('click', () => { const fsOverlay = document.getElementById('fullscreen-input-overlay'); const fsTextarea = document.getElementById('fullscreen-textarea'); fsTextarea.value = msgInput.value; fsOverlay.style.display = 'flex'; fsTextarea.focus(); });
+        document.getElementById('fullscreen-btn').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; const fsOverlay = document.getElementById('fullscreen-input-overlay'); const fsTextarea = document.getElementById('fullscreen-textarea'); fsTextarea.value = msgInput.value; fsOverlay.style.display = 'flex'; fsTextarea.focus(); });
         function closeFullscreenInput() { document.getElementById('fullscreen-input-overlay').style.display = 'none'; }
-        function sendFullscreenText() { const text = document.getElementById('fullscreen-textarea').value.trim(); if(text) { sendEncryptedPacket('text', text, false); } closeFullscreenInput(); msgInput.value = ''; msgInput.style.height = '46px'; }
+        function sendFullscreenText() { const text = document.getElementById('fullscreen-textarea').value.trim(); if(text) { sendEncryptedPacket('text', text, false); } closeFullscreenInput(); msgInput.value = ''; msgInput.style.height = '48px'; }
 
         window.showImage = function(src) { const overlay = document.getElementById('lightbox-overlay'); document.getElementById('lightbox-img').src = src; overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('active'), 10); };
 
@@ -504,7 +508,6 @@
             isUploadingAnnounceImg = true; document.getElementById('file-input').click();
         });
 
-        // 🔥 焚毁按钮逻辑更新为管理员密码验证
         document.getElementById('burn-btn').addEventListener('click', () => {
             actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)';
             document.getElementById('burn-pwd-input').value = '';
@@ -603,7 +606,7 @@
             }
         }
 
-        function sendText(isAnnounce = false) { const text = msgInput.value.trim(); if (!text) return; msgInput.value = ''; msgInput.style.height = '46px'; sendEncryptedPacket('text', text, isAnnounce); }
+        function sendText(isAnnounce = false) { const text = msgInput.value.trim(); if (!text) return; msgInput.value = ''; msgInput.style.height = '48px'; sendEncryptedPacket('text', text, isAnnounce); }
 
         document.getElementById('send-img-btn').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; isUploadingAnnounceImg = false; document.getElementById('file-input').click(); });
 
