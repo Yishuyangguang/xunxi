@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FFB52E">
+    <title>☀️ 太阳信道</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
+    
+    <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
+    
+    <style>
+        :root {
+            --sun-bg-light: #FFDF73;
+            --sun-bg-dark: #FF9B00;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-main: #4A3000;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
+            background: linear-gradient(135deg, var(--sun-bg-light) 0%, var(--sun-bg-dark) 100%);
+            color: var(--text-main); 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; height: 100dvh; 
+            overflow: hidden; position: relative;
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        .bg-blob-1 { position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: #FFEA8C; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.8; pointer-events: none; }
+        .bg-blob-2 { position: absolute; bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: #FF8000; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.8; pointer-events: none; }
+
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; 
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 9999; padding: 20px; box-sizing: border-box;
+        }
+        #admin-overlay { background: rgba(0, 0, 0, 0.2); display: none; z-index: 10000; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+        .auth-card { 
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px; padding: 45px 35px; width: 100%; max-width: 350px; 
+            border: 1px solid rgba(255,255,255,0.5); border-bottom-color: rgba(255,255,255,0.2); border-right-color: rgba(255,255,255,0.2);
+            box-shadow: 0 20px 50px rgba(180, 100, 0, 0.2), inset 2px 2px 5px rgba(255,255,255,0.5);
+            animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .auth-card h2 { margin: 0 0 10px 0; font-size: 28px; font-weight: 700; display: flex; justify-content: center; align-items: center; gap: 8px;}
+        .auth-card p { margin: 0 0 32px 0; font-size: 15px; opacity: 0.85; letter-spacing: 1px; text-align: center; }
+        
+        .glass-input {
+            width: 100%; height: 54px; padding: 0 20px; border-radius: 20px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.6); border-bottom-color: rgba(255, 255, 255, 0.1); border-right-color: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.8), inset -3px -3px 7px rgba(0, 0, 0, 0.04), 0 6px 15px rgba(0, 0, 0, 0.05);
+            color: var(--text-main); font-size: 16px; font-weight: 500;
+            text-align: center; outline: none; margin-bottom: 24px; 
+            transform: translateZ(0); will-change: background, border-color; transition: background 0.2s, border-color 0.2s;
+        }
+        .glass-input::placeholder { color: rgba(74, 48, 0, 0.5); text-align: center; }
+        .glass-input:focus { background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%); border-color: rgba(255, 255, 255, 0.9); }
+        
+        .glass-btn {
+            width: 100%; height: 54px; border-radius: 20px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.6); border-bottom-color: rgba(255, 255, 255, 0.1); border-right-color: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.8), inset -3px -3px 7px rgba(0, 0, 0, 0.05), 0 8px 20px rgba(0, 0, 0, 0.08);
+            color: var(--text-main); font-size: 16px; font-weight: bold; cursor: pointer; 
+            display: flex; justify-content: center; align-items: center; gap: 6px;
+            transform: translateZ(0); transition: all 0.15s ease-out;
+        }
+        .glass-btn:active { 
+            transform: translateY(3px) scale(0.97); 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.4) 100%);
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.08), inset -4px -4px 8px rgba(255, 255, 255, 0.6), 0 2px 5px rgba(0, 0, 0, 0.03);
+            border-top-color: rgba(255,255,255,0.2); border-left-color: rgba(255,255,255,0.2);
+        }
+
+        .btn-group { display: flex; gap: 10px; width: 100%; }
+        .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
+
+        .btn-text-announce { background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: inset 2px 2px 6px rgba(255, 255, 255, 0.9), inset -3px -3px 6px rgba(0, 0, 0, 0.05), 0 8px 15px rgba(0, 0, 0, 0.05); color: var(--text-main); }
+        .btn-text-announce:active { background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.6) 100%); box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.02); }
+        .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.65) 0%, rgba(255, 90, 0, 0.25) 100%); border: 1px solid rgba(255, 200, 100, 0.6); border-bottom-color: rgba(255, 100, 0, 0.2); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.6), inset -3px -3px 6px rgba(200, 50, 0, 0.2), 0 8px 15px rgba(255, 100, 0, 0.15); color: #fff; text-shadow: 0 1px 2px rgba(150, 50, 0, 0.4); }
+        .btn-img-announce:active { background: linear-gradient(135deg, rgba(255, 100, 0, 0.3) 0%, rgba(255, 140, 0, 0.6) 100%); box-shadow: inset 4px 4px 8px rgba(150, 50, 0, 0.3), inset -4px -4px 8px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.02); border-top-color: rgba(255,150,50,0.3); border-left-color: rgba(255,150,50,0.3); }
+
+        #chat-container { display: none; width: 100%; max-width: 760px; height: 92vh; max-height: 900px; flex-direction: column; position: relative; border-radius: 30px; overflow: hidden; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 16px 40px rgba(180, 100, 0, 0.15), inset 2px 2px 4px rgba(255,255,255,0.4); }
+        @media (max-width: 768px) { #chat-container { height: 100vh; height: 100dvh; border-radius: 0; border: none; } }
+        
+        #header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 600; font-size: 18px; padding-top: max(18px, env(safe-area-inset-top)); background: rgba(255,255,255,0.15); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        
+        #announcement-bar { display: none; flex-direction: column; gap: 8px; padding: 12px 25px; border-bottom: 1px solid rgba(255,255,255,0.2); background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); max-height: 30vh; overflow-y: auto;}
+        .announce-item { font-size: 13px; color: var(--text-main); opacity: 0.95; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.5; }
+        .announce-badge { font-weight: bold; margin-right: 6px; color: #cc4a00; flex-shrink: 0; }
+        .announce-content { flex: 1; word-break: break-all; display: flex; flex-direction: column; }
+        .announce-img { max-width: 100%; border-radius: 8px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        #messages { flex: 1; padding: 20px 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; -webkit-overflow-scrolling: touch; }
+        .message { padding: 12px 18px; border-radius: 20px; max-width: 78%; word-break: break-all; font-size: 15px; line-height: 1.5; position: relative; }
+        .msg-sys { text-align: center; font-size: 0.85em; align-self: center; border-radius: 14px; padding: 8px 18px; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: rgba(74, 48, 0, 0.85); }
+        .msg-self { background: rgba(255, 255, 255, 0.85); align-self: flex-end; border-bottom-right-radius: 4px; border: 1px solid #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
+        .msg-other { background: rgba(255, 255, 255, 0.45); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 4px 15px rgba(0,0,0,0.03); }
+        .msg-sender { font-size: 0.75em; opacity: 0.65; margin-bottom: 6px; display: block; font-weight: 600; }
+        .msg-img { max-width: 100%; border-radius: 12px; margin-top: 6px; display: block; border: 1px solid rgba(255,255,255,0.5); }
+        .countdown-timer { font-size: 11px; opacity: 0.55; margin-left: 10px; font-family: -apple-system-monospaced, monospace; white-space: nowrap; font-weight: 500; flex-shrink: 0; }
+
+        #input-area { display: flex; gap: 10px; padding: 15px 25px; border-top: 1px solid rgba(255,255,255,0.3); padding-bottom: max(15px, env(safe-area-inset-bottom)); align-items: center; background: rgba(255,255,255,0.15); box-shadow: 0 -4px 15px rgba(0,0,0,0.02); }
+        
+        #msg-input { 
+            flex: 1; padding: 0 20px; height: 50px; border-radius: 25px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%);
+            border: 1px solid rgba(255,255,255,0.6); border-bottom-color: rgba(255,255,255,0.2); border-right-color: rgba(255,255,255,0.2);
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.8), inset -3px -3px 6px rgba(0,0,0,0.04), 0 4px 10px rgba(0,0,0,0.03);
+            color: var(--text-main); outline: none; font-size: 16px; 
+            transform: translateZ(0); will-change: background, border-color; transition: background 0.2s, border-color 0.2s;
+        }
+        #msg-input:focus { background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 100%); border-color: #fff; }
+        
+        .action-btn { 
+            height: 50px; padding: 0 18px; border-radius: 25px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.15) 100%);
+            border: 1px solid rgba(255,255,255,0.7); border-bottom-color: rgba(255,255,255,0.1); border-right-color: rgba(255,255,255,0.1);
+            box-shadow: inset 2px 2px 4px rgba(255,255,255,0.9), inset -2px -2px 5px rgba(0,0,0,0.05), 0 6px 15px rgba(0,0,0,0.05);
+            color: var(--text-main); font-size: 16px; font-weight: 600;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; 
+            transform: translateZ(0); transition: all 0.15s ease-out;
+        }
+        .action-btn:active { 
+            transform: translateY(3px) scale(0.95); background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.5) 100%);
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.08), inset -4px -4px 8px rgba(255,255,255,0.7), 0 2px 4px rgba(0,0,0,0.02);
+            border-top-color: rgba(255,255,255,0.2); border-left-color: rgba(255,255,255,0.2);
+        }
+        .icon-btn { width: 50px; padding: 0; border-radius: 25px; font-size: 20px; }
+        #send-btn { background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%); }
+
+        #file-input { display: none; }
+        @keyframes scaleIn { 0% { opacity: 0; transform: scale(0.92) translateY(15px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blob-1"></div>
+    <div class="bg-blob-2"></div>
+
+    <div id="auth-overlay" class="overlay">
+        <div class="auth-card">
+            <h2>☀️ 太阳信道</h2>
+            <p>安全加密网络</p>
+            <input type="password" id="pwd-input" class="glass-input" placeholder="请输入访问密钥" autocomplete="off">
+            <button id="pwd-btn" class="glass-btn">验证并进入</button>
+        </div>
+    </div>
+
+    <div id="admin-overlay" class="overlay">
+        <div class="auth-card" style="padding: 35px 25px; max-width: 420px;">
+            <h3 style="margin: 0 0 20px 0;">管理员权限验证</h3>
+            <textarea id="admin-text-input" class="glass-input" placeholder="在此输入文字公告内容（支持5000字内）" maxlength="5000" style="height: 100px; resize: none; text-align: left; padding: 15px; border-radius: 16px;"></textarea>
+            <input type="password" id="admin-pwd-input" class="glass-input" placeholder="输入公告发布密码" autocomplete="off" style="margin-bottom: 24px;">
+            <div class="btn-group">
+                <button id="admin-cancel-btn" class="glass-btn btn-cancel" style="flex: 0.8;">取消</button>
+                <button id="admin-confirm-text-btn" class="glass-btn btn-text-announce" style="flex: 1.2;">📝 发文字</button>
+                <button id="admin-confirm-img-btn" class="glass-btn btn-img-announce" style="flex: 1.2;">🖼️ 发图片</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-container">
+        <div id="header">
+            <span>☀️ 太阳信道</span>
+            <span id="user-info" style="opacity: 0.8; font-size: 14px; font-weight: 500;"></span>
+        </div>
+        
+        <div id="announcement-bar"></div>
+        <div id="messages"></div>
+        
+        <div id="input-area">
+            <div class="action-btn icon-btn" id="send-img-btn" title="发送图片">📷</div>
+            <div class="action-btn icon-btn" id="announce-btn" title="发布公告面板">📢</div>
+            <input type="text" id="msg-input" maxlength="3000" placeholder="输入加密消息..." autocomplete="off">
+            <div class="action-btn" id="send-btn">发送</div>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+    </div>
+
+    <script>
+        // --- 核心防伪与混合加密系统 ---
+        const SYSTEM_PEPPER = "SunChat_E2EE_V12_SuperSecure_Pepper_@2026!"; // 极高强度的底层硬编码盐值
+        const LIFESPAN_MS = (12 * 60 * 60 * 1000) + (1 * 60 * 1000); 
+        
+        // --- URL 房间号自动补全与隐藏机制 ---
+        let roomID = new URLSearchParams(window.location.search).get('room');
+        if (!roomID) {
+            // 生成 16 位高强度安全随机数作为房间号
+            roomID = Array.from(window.crypto.getRandomValues(new Uint8Array(8)))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+            // 静默修改 URL 附加房间号，供用户分享
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?room=' + roomID;
+            window.history.replaceState({path: newUrl}, '', newUrl);
+        }
+        // 基于房间号隔离 MQTT 频道，确保互不串线
+        const TOPIC = "sun-e2ee-room-" + roomID;
+        const TOPIC_ANNOUNCE = TOPIC + "-announce";
+        
+        const CryptoService = {
+            key: null,
+            async initKey(shortPassword) {
+                const enc = new TextEncoder();
+                // 终极安全融合：用户短口令 + 系统级重胡椒 + 专属房间盐值
+                const combinedKeyMaterial = shortPassword + SYSTEM_PEPPER;
+                
+                const keyMaterial = await window.crypto.subtle.importKey(
+                    "raw", enc.encode(combinedKeyMaterial), { name: "PBKDF2" }, false, ["deriveKey"]
+                );
+                this.key = await window.crypto.subtle.deriveKey(
+                    { name: "PBKDF2", salt: enc.encode(roomID), iterations: 100000, hash: "SHA-256" },
+                    keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+                );
+            },
+            async encrypt(text) {
+                const enc = new TextEncoder();
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, this.key, enc.encode(text));
+                return JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) });
+            },
+            async decrypt(payloadStr) {
+                try {
+                    const payload = JSON.parse(payloadStr);
+                    const iv = new Uint8Array(payload.iv);
+                    const data = new Uint8Array(payload.data);
+                    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, this.key, data);
+                    return new TextDecoder().decode(decrypted);
+                } catch (e) { return null; }
+            }
+        };
+
+        const StorageService = {
+            async save(messages, announcements) {
+                if (!CryptoService.key) return;
+                const payload = JSON.stringify({ msgs: messages, ann: announcements });
+                const encryptedData = await CryptoService.encrypt(payload);
+                // 存储键名绑定房间号，防止多开网页数据串门
+                localStorage.setItem('sun_secure_vault_' + roomID, encryptedData);
+            },
+            async load() {
+                const raw = localStorage.getItem('sun_secure_vault_' + roomID);
+                if (!raw) return { msgs: [], ann: [] };
+                const decryptedStr = await CryptoService.decrypt(raw);
+                if (!decryptedStr) return { msgs: [], ann: [] };
+                try { return JSON.parse(decryptedStr); } catch(e) { return { msgs: [], ann: [] }; }
+            }
+        };
+
+        let mqttClient;
+        let username;
+        let localMessages = [];
+        let announcements = [];
+        let isUploadingAnnounceImg = false; 
+
+        async function initSecureContext() {
+            try {
+                const data = await StorageService.load();
+                const now = Date.now();
+                localMessages = (data.msgs || []).filter(m => now - m.timestamp < LIFESPAN_MS);
+                announcements = (data.ann || []).filter(a => now - a.timestamp < LIFESPAN_MS);
+                
+                localMessages.forEach(m => renderMessage(m.type, m.sender, m.content, m.timestamp));
+                renderAnnouncements();
+            } catch(e) {}
+        }
+
+        async function syncToStorage() {
+            if(localMessages.length > 150) localMessages = localMessages.slice(-150);
+            await StorageService.save(localMessages, announcements);
+        }
+
+        function updateCountdowns() {
+            const now = Date.now();
+            let needsSync = false;
+            
+            document.querySelectorAll('.time-tracker').forEach(el => {
+                const ts = parseInt(el.getAttribute('data-ts'));
+                const diff = (ts + LIFESPAN_MS) - now;
+                
+                if (diff <= 0) {
+                    const parentRow = el.closest('.message, .announce-item');
+                    if(parentRow) parentRow.remove();
+                    needsSync = true;
+                } else {
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    el.innerText = `⏳ 剩 ${h}h ${m}m`;
+                }
+            });
+
+            if(needsSync) cleanExpiredData();
+        }
+        setInterval(updateCountdowns, 10000);
+
+        async function cleanExpiredData() {
+            const now = Date.now();
+            const initMsgLen = localMessages.length; const initAnnLen = announcements.length;
+            localMessages = localMessages.filter(m => now - m.timestamp < LIFESPAN_MS);
+            announcements = announcements.filter(a => now - a.timestamp < LIFESPAN_MS);
+            if(localMessages.length !== initMsgLen || announcements.length !== initAnnLen) { await syncToStorage(); renderAnnouncements(); }
+        }
+
+        const authOverlay = document.getElementById('auth-overlay');
+        const pwdInput = document.getElementById('pwd-input');
+        const pwdBtn = document.getElementById('pwd-btn');
+
+        async function verifyAndEnter() {
+            const pwd = pwdInput.value.trim();
+            // 在动态盐值架构下，理论上你可以用任何数字作为密码建立新房间，不再拘泥于777
+            if (!pwd) {
+                pwdInput.placeholder = '密码不可为空';
+                setTimeout(() => pwdInput.placeholder = '请输入访问密钥', 1500); return;
+            }
+            
+            pwdBtn.innerText = "生成加密沙箱...";
+            await CryptoService.initKey(pwd); // 底层自动混合补全
+            username = "U_" + Math.random().toString(36).substring(2, 6).toUpperCase();
+            
+            authOverlay.style.display = 'none';
+            document.getElementById('chat-container').style.display = 'flex';
+            document.getElementById('user-info').innerText = username;
+            
+            await initSecureContext();
+            connectMQTT(); updateCountdowns();
+        }
+
+        pwdBtn.addEventListener('click', verifyAndEnter);
+        pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAndEnter(); });
+
+        const adminOverlay = document.getElementById('admin-overlay');
+        const adminPwdInput = document.getElementById('admin-pwd-input');
+        const adminTextInput = document.getElementById('admin-text-input');
+        
+        document.getElementById('announce-btn').addEventListener('click', () => {
+            adminOverlay.style.display = 'flex'; 
+            adminPwdInput.focus();
+        });
+
+        function checkAdminPwd() {
+            if (adminPwdInput.value.trim() !== "5214") {
+                alert("只有管理员才可以发布通告"); 
+                adminPwdInput.value = ''; 
+                return false;
+            }
+            return true;
+        }
+
+        document.getElementById('admin-confirm-text-btn').addEventListener('click', () => {
+            if (!checkAdminPwd()) return;
+            const text = adminTextInput.value.trim();
+            if (!text) return alert("请先在上方输入文字内容");
+            
+            adminOverlay.style.display = 'none'; 
+            adminPwdInput.value = ''; 
+            adminTextInput.value = '';
+            sendEncryptedPacket('text', text, true);
+        });
+
+        document.getElementById('admin-confirm-img-btn').addEventListener('click', () => {
+            if (!checkAdminPwd()) return;
+            adminOverlay.style.display = 'none'; 
+            adminPwdInput.value = ''; 
+            adminTextInput.value = '';
+            
+            isUploadingAnnounceImg = true;
+            document.getElementById('file-input').click();
+        });
+
+        document.getElementById('admin-cancel-btn').addEventListener('click', () => { 
+            adminOverlay.style.display = 'none'; 
+            adminPwdInput.value = ''; 
+            adminTextInput.value = ''; 
+        });
+
+        function connectMQTT() {
+            appendSysMessage('系统', '正在握手加密信令网络...');
+            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: 'sun_' + Math.random().toString(16).substr(2, 8) });
+
+            mqttClient.on('connect', () => {
+                appendSysMessage('系统', '☀️ 已建立私密直连。信息将于12小时后自动粉碎。');
+                mqttClient.subscribe(TOPIC); mqttClient.subscribe(TOPIC_ANNOUNCE);
+            });
+
+            mqttClient.on('message', async (topic, message) => {
+                try {
+                    const wrapper = JSON.parse(message.toString());
+                    const decryptedData = await CryptoService.decrypt(wrapper.encryptedPayload);
+                    // 动态盐值优势：解密失败(密码对不上)会直接返回null，自动抛弃脏数据，不会在界面报乱码错
+                    if (!decryptedData) return;
+                    
+                    const payload = JSON.parse(decryptedData); 
+                    if (Date.now() - payload.timestamp >= LIFESPAN_MS) return;
+
+                    if (topic === TOPIC_ANNOUNCE) {
+                        if (payload.type === 'announce_list') {
+                            announcements = payload.content; await syncToStorage(); renderAnnouncements();
+                        }
+                        return;
+                    }
+
+                    if (wrapper.sender === username) return; 
+                    
+                    localMessages.push({ type: payload.type, sender: wrapper.sender, content: payload.content, timestamp: payload.timestamp });
+                    await syncToStorage(); renderMessage(payload.type, wrapper.sender, payload.content, payload.timestamp);
+                } catch (error) {}
+            });
+        }
+
+        async function sendEncryptedPacket(type, content, isAnnounce = false) {
+            if (!mqttClient || !mqttClient.connected) return alert("网络连接异常");
+            const ts = Date.now();
+            
+            if (isAnnounce) {
+                announcements.push({ type: type, content: content, sender: username, timestamp: ts });
+                if (announcements.length > 3) announcements.shift(); 
+                await syncToStorage(); renderAnnouncements();
+                
+                const internalPayload = JSON.stringify({ type: 'announce_list', content: announcements, timestamp: ts });
+                const encryptedPayload = await CryptoService.encrypt(internalPayload);
+                mqttClient.publish(TOPIC_ANNOUNCE, JSON.stringify({ sender: username, encryptedPayload }), { retain: true });
+                appendSysMessage('系统', '📢 已发布机密公告');
+            } else {
+                localMessages.push({ type: type, sender: username, content: content, timestamp: ts });
+                await syncToStorage(); renderMessage(type, username, content, ts); 
+                
+                const internalPayload = JSON.stringify({ type: type, content: content, timestamp: ts });
+                const encryptedPayload = await CryptoService.encrypt(internalPayload);
+                mqttClient.publish(TOPIC, JSON.stringify({ sender: username, encryptedPayload }));
+            }
+        }
+
+        function sendText(isAnnounce = false) {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = ''; sendEncryptedPacket('text', text, isAnnounce);
+        }
+
+        document.getElementById('send-img-btn').addEventListener('click', () => {
+            isUploadingAnnounceImg = false; 
+            document.getElementById('file-input').click();
+        });
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > 800) { h = Math.round((h * 800) / w); w = 800; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    
+                    sendEncryptedPacket('image', canvas.toDataURL('image/jpeg', 0.6), isUploadingAnnounceImg);
+                    isUploadingAnnounceImg = false; 
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file); e.target.value = ''; 
+        });
+
+        function appendSysMessage(sender, text) {
+            const container = document.getElementById('messages');
+            const div = document.createElement('div'); div.className = `message msg-sys`; div.innerText = text;
+            container.appendChild(div); container.scrollTop = container.scrollHeight;
+        }
+
+        function renderMessage(type, sender, content, timestamp) {
+            const container = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${sender === username ? 'msg-self' : 'msg-other'}`;
+            
+            const safeContent = type === 'text' ? content.replace(/</g, "&lt;") : '';
+            let inner = `<span class="msg-sender">${sender} <span class="countdown-timer time-tracker" data-ts="${timestamp}"></span></span>`;
+            if (type === 'text') inner += safeContent;
+            else if (type === 'image') inner += `<img class="msg-img" src="${content}">`;
+            
+            div.innerHTML = inner; container.appendChild(div); container.scrollTop = container.scrollHeight; updateCountdowns(); 
+        }
+
+        function renderAnnouncements() {
+            const bar = document.getElementById('announcement-bar');
+            if (announcements.length === 0) { bar.style.display = 'none'; return; }
+            bar.style.display = 'flex';
+            bar.innerHTML = announcements.map(a => {
+                const isImage = a.type === 'image';
+                const contentHtml = isImage 
+                    ? `<img class="announce-img" src="${a.content}">` 
+                    : (a.content || a.text || "").replace(/</g, "&lt;");
+                    
+                return `<div class="announce-item">
+                            <span class="announce-badge">📢</span>
+                            <div class="announce-content">${contentHtml}</div>
+                            <span class="countdown-timer time-tracker" data-ts="${a.timestamp}"></span>
+                        </div>`;
+            }).join('');
+            updateCountdowns();
+        }
+
+        document.getElementById('send-btn').addEventListener('click', () => sendText(false));
+        document.getElementById('msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendText(false); });
+    </script>
+</body>
+</html>
