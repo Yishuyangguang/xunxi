@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="zh-CN"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">    <link rel="manifest" id="dynamic-manifest">    <meta name="apple-mobile-web-app-capable" content="yes">    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <meta name="apple-mobile-web-app-title" content="有点儿意思">    <meta name="theme-color" content="#FFB703">    <title>🌞 有点儿意思</title>    <!-- 完美苹果桌面高清可爱太阳图标 -->    <link rel="apple-touch-icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">    <link rel="icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">        <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>    <link rel="preconnect" href="https://broker.emqx.io" crossorigin>    <script src="https://fastly.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>        <style>        :root {            --text-main: #5C3A21;            --sun-gold-light: #FFDA77;            --sun-gold-mid: #FFB703;            --sun-gold-dark: #FB8500;        }
+<!DOCTYPE html><html lang="zh-CN"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">    <link rel="manifest" id="dynamic-manifest">    <meta name="apple-mobile-web-app-capable" content="yes">    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <meta name="apple-mobile-web-app-title" content="有点儿意思">    <meta name="theme-color" content="#FFB703">    <title>🌞 有点儿意思</title>    <link rel="apple-touch-icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">    <link rel="icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">        <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>    <link rel="preconnect" href="https://broker.emqx.io" crossorigin>    <script src="https://fastly.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>        <style>        :root {            --text-main: #5C3A21;            --sun-gold-light: #FFDA77;            --sun-gold-mid: #FFB703;            --sun-gold-dark: #FB8500;        }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
         
-        body { 
+        /* 完美全屏自适应：适配所有手机与浏览器的可视区 */
+        html, body { 
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
             background-color: var(--sun-gold-mid);
             background-image: 
@@ -9,16 +10,18 @@
                 radial-gradient(circle at 80% 100%, var(--sun-gold-dark) 0%, transparent 55%),
                 linear-gradient(135deg, var(--sun-gold-light) 0%, var(--sun-gold-mid) 50%, var(--sun-gold-dark) 100%);
             color: var(--text-main); 
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden; 
+            position: fixed;
+            top: 0; left: 0;
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
-            height: 100dvh; 
-            overflow: hidden; 
-            position: relative;
             -webkit-font-smoothing: antialiased; 
             overscroll-behavior-y: none;
-            padding: 0;
+            padding: env(safe-area-inset-top, 12px) 10px env(safe-area-inset-bottom, 12px) 10px;
         }
 
         .bg-blob-1 { position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(255, 245, 200, 0.6); border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; transform: translate3d(0,0,0); }
@@ -26,7 +29,7 @@
 
         .glass-3d {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
-            backdrop-filter: blur(30px) saturate(130%); -webkit-backdrop-filter: blur(30px) saturate(130%);
+            backdrop-filter: blur(20px) saturate(120%); -webkit-backdrop-filter: blur(20px) saturate(120%);
             border-top: 1px solid rgba(255, 255, 255, 0.9); border-left: 1px solid rgba(255, 255, 255, 0.6);
             border-right: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 12px 35px rgba(160, 70, 0, 0.15), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
@@ -37,7 +40,7 @@
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; 
             display: flex; justify-content: center; align-items: center; flex-direction: column;
             z-index: 9999; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.15);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
 
         #lightbox-overlay { display: none; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10001; cursor: zoom-out; }
@@ -105,28 +108,24 @@
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
-        /* 聊天主容器：精准向下偏移 64px（彻底避开微信沉浸式状态栏与各种手机刘海/灵动岛），让标题和昵称完整完美展现 */
+        /* 聊天主容器：采用 100% 流式弹性自适应，自动完美填满任何手机屏幕，杜绝任何机型显示不全 */
         #chat-container { 
             display: none; 
             width: 100%; 
+            height: 100%; 
             max-width: 800px; 
-            height: calc(100dvh - 64px); 
-            max-height: calc(100dvh - 64px); 
             flex-direction: column; 
             position: relative; 
             border-radius: 28px; 
             overflow: hidden; 
-            margin: auto; 
+            margin: 0 auto; 
             box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6);
-            margin-top: 64px;
         }
         @media (min-width: 781px) { 
             #chat-container { 
                 height: 92vh; 
                 max-height: 950px; 
                 border-radius: 36px; 
-                box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6); 
-                margin-top: 0;
             } 
         }
 
@@ -144,7 +143,7 @@
             display: none; flex-direction: column; gap: 10px; padding: 16px 24px; 
             border-bottom: 1px solid rgba(255, 255, 255, 0.4); 
             background: linear-gradient(135deg, rgba(30, 25, 20, 0.85) 0%, rgba(50, 40, 30, 0.65) 100%); 
-            backdrop-filter: blur(25px) saturate(140%); -webkit-backdrop-filter: blur(25px) saturate(140%);
+            backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
             max-height: 28vh; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 9; 
             box-shadow: inset 0 2px 6px rgba(255, 215, 0, 0.25), 0 8px 25px rgba(0, 0, 0, 0.25);
             border-top: 1px solid rgba(255, 215, 0, 0.4);
@@ -182,7 +181,7 @@
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.35) 100%); 
             border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6);
             box-shadow: inset 1px 1px 3px rgba(255,255,255,0.9), inset -1px -1px 3px rgba(0,0,0,0.03), 0 4px 15px rgba(0,0,0,0.05); 
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
             color: rgba(92, 58, 33, 0.9); width: fit-content; margin: 0 auto; font-weight: 500;
         }
 
@@ -195,7 +194,7 @@
         .msg-other { 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.4) 100%); border-bottom-left-radius: 6px; 
             border-top: 1px solid rgba(255,255,255,0.95); border-left: 1px solid rgba(255,255,255,0.7);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); 
             box-shadow: inset 1px 1px 3px rgba(255,255,255,1), inset -2px -2px 4px rgba(0,0,0,0.03), 0 6px 15px rgba(180, 80, 0, 0.06); 
         }
 
@@ -205,9 +204,9 @@
         #bottom-wrapper { position: relative; z-index: 101; }
 
         #action-menu {
-            position: absolute; bottom: 76px; left: 20px; 
+            position: absolute; bottom: 85px; left: 20px; 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.5) 100%); 
-            backdrop-filter: blur(20px) saturate(120%); -webkit-backdrop-filter: blur(20px) saturate(120%);
+            backdrop-filter: blur(15px) saturate(120%); -webkit-backdrop-filter: blur(15px) saturate(120%);
             border-top: 1px solid rgba(255, 255, 255, 1); border-left: 1px solid rgba(255, 255, 255, 0.7);
             border-radius: 26px; padding: 12px; display: flex; gap: 12px;
             box-shadow: 0 10px 30px rgba(180, 80, 0, 0.15), inset 2px 2px 6px rgba(255,255,255,0.9);
@@ -217,9 +216,9 @@
         #action-menu.active { opacity: 1; transform: scale(1) translate3d(0, 0, 0); pointer-events: auto; }
 
         #emoji-panel {
-            display: none; position: absolute; bottom: 145px; left: 20px; right: 20px; 
+            display: none; position: absolute; bottom: 155px; left: 20px; right: 20px; 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.4) 100%); 
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-top: 1px solid rgba(255, 255, 255, 1); border-left: 1px solid rgba(255, 255, 255, 0.7);
             border-radius: 28px; padding: 18px; 
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 10px; 
@@ -230,11 +229,13 @@
         .emoji-item { font-size: 30px; text-align: center; cursor: pointer; transition: transform 0.15s; user-select: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
         .emoji-item:active { transform: scale(1.4); }
 
+        /* 发送框区域：完美下移，自带苹果/安卓安全底部间距 */
         #input-area { 
-            display: flex; gap: 10px; padding: 12px 20px; 
+            display: flex; gap: 10px; padding: 14px 20px; 
             border-top: 1px solid rgba(255,255,255,0.5); 
             align-items: flex-end; background: rgba(255,255,255,0.25); 
             box-shadow: 0 -4px 20px rgba(180,80,0,0.05); position: relative;
+            padding-bottom: max(22px, env(safe-area-inset-bottom));
         }
 
         .icon-btn { width: 44px; height: 44px; padding: 0; border-radius: 22px; font-size: 20px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
@@ -252,7 +253,7 @@
 
         #send-btn { width: auto; height: 44px; padding: 0 18px; border-radius: 22px; font-size: 15px; flex-shrink: 0;}
 
-        #fullscreen-input-overlay { display: none; background: rgba(255,183,3,0.95); backdrop-filter: blur(25px); z-index: 10000; flex-direction: column; padding: max(30px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); }
+        #fullscreen-input-overlay { display: none; background: rgba(255,183,3,0.95); backdrop-filter: blur(20px); z-index: 10000; flex-direction: column; padding: max(30px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); }
         #fullscreen-textarea { flex: 1; width: 100%; border-radius: 28px; padding: 25px; font-size: 18px; line-height: 1.6; resize: none; background: rgba(255,255,255,0.6); border: 1px solid #fff; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.06); color: var(--text-main); outline: none; margin-bottom: 20px; }
 
         #file-input { display: none; }
@@ -411,8 +412,10 @@
         const CryptoService = {
             key: null,
             async initKey(shortPassword) {
-                const enc = new TextEncoder(); const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(shortPassword + SYSTEM_PEPPER), { name: "PBKDF2" }, false, ["deriveKey"]);
-                this.key = await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode(roomID), iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+                const enc = new TextEncoder(); 
+                // 性能极致优化：将迭代次数从 100,000 降至 10,000 次，彻底消除手机端首次输入的加载缓冲与卡顿感
+                const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(shortPassword + SYSTEM_PEPPER), { name: "PBKDF2" }, false, ["deriveKey"]);
+                this.key = await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode(roomID), iterations: 10000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
             },
             async encrypt(text) { const enc = new TextEncoder(); const iv = window.crypto.getRandomValues(new Uint8Array(12)); const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, this.key, enc.encode(text)); return JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) }); },
             async decrypt(payloadStr) { try { const payload = JSON.parse(payloadStr); const iv = new Uint8Array(payload.iv); const data = new Uint8Array(payload.data); const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, this.key, data); return new TextDecoder().decode(decrypted); } catch (e) { return null; } }
