@@ -1,12 +1,13 @@
-const CACHE_NAME = 'sun-chat-v14-pwa';
-// 让 Service Worker 立即接管页面，触发安装机制
+const CACHE_NAME = 'sun-chat-v16-pwa';
 self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
-// 拦截网络请求，保证即使断网也能打开 APP 骨架
 self.addEventListener('fetch', (event) => {
-    event.respondWith(fetch(event.request).catch(() => new Response("Network offline")));
+    // 基础的网络优先，失败回退逻辑，骗过 PWA 安装检测
+    event.respondWith(
+        fetch(event.request).catch(() => new Response("Network offline, but App is running."))
+    );
 });
