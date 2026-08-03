@@ -68,17 +68,17 @@
             display: flex; flex-direction: column; align-items: center; position: relative;
         }
 
-        /* --- 核心优化：顶级黑金 3D 玻璃材质文字 --- */
+        /* 顶级黑金 3D 玻璃材质文字 */
         .text-black-gold {
-            color: #1a1a1a; /* 曜石黑底色 */
+            color: #1a1a1a; 
             font-weight: 900;
             letter-spacing: 2px;
             text-shadow: 
-                0px -1px 1px rgba(255, 255, 255, 0.5),   /* 顶部玻璃反光 */
-                0px 1px 0px #FFDF73,                     /* 金色阳角 */
-                0px 2px 0px #FB8500,                     /* 橙金侧壁深度 */
-                0px 3px 2px rgba(180, 70, 0, 0.8),       /* 深邃环境金光 */
-                0px 6px 15px rgba(0, 0, 0, 0.5);         /* 底部悬浮厚重阴影 */
+                0px -1px 1px rgba(255, 255, 255, 0.5),   
+                0px 1px 0px #FFDF73,                     
+                0px 2px 0px #FB8500,                     
+                0px 3px 2px rgba(180, 70, 0, 0.8),       
+                0px 6px 15px rgba(0, 0, 0, 0.5);         
         }
         .logo-3d { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 10px 0; font-size: 28px;}
         .logo-3d-mini { display: flex; align-items: center; gap: 6px; font-size: 20px;}
@@ -121,7 +121,7 @@
         .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
         .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.7) 0%, rgba(255, 90, 0, 0.3) 100%); border-top-color: rgba(255,200,100,0.9); color: #fff; }
 
-        /* 隐藏且只允许通过特定事件唤起 */
+        /* 管理员面板确保开屏绝对隐藏 */
         #admin-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         #admin-overlay .auth-card { max-width: 420px; padding: 40px 30px; }
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
@@ -264,7 +264,7 @@
                 <img src="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png" class="cute-sun" alt="太阳">
                 有点儿意思
             </div>
-            <!-- 精简对称的文案，去除了系统通知的请求打扰 -->
+            <!-- 精简对称文案，纯净无弹窗 -->
             <p>🪐 探索无界 · 发现奇趣 🛸</p>
             <input type="password" id="pwd-input" class="glass-input" placeholder="请输入访问密钥" autocomplete="off">
             <button id="pwd-btn" class="glass-btn">验证并进入</button>
@@ -285,7 +285,7 @@
         <textarea id="fullscreen-textarea" placeholder="在这里尽情挥洒你的长篇大论..."></textarea>
     </div>
 
-    <!-- 管理员专属通道：默认强制隐藏 display:none -->
+    <!-- 管理员专属通道：默认隐藏 display:none -->
     <div id="admin-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d" style="padding: 35px 25px; max-width: 420px;">
             <div class="close-btn" onclick="document.getElementById('admin-overlay').style.display='none'">×</div>
@@ -354,7 +354,7 @@
         document.getElementById('install-btn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; } deferredPrompt = null; } });
         window.addEventListener('appinstalled', () => { alert("🎉 应用已成功安装！"); document.getElementById('install-btn').style.display = 'none'; });
 
-        const SYSTEM_PEPPER = "SunChat_E2EE_V25_SuperSecure_Pepper_@2026!"; 
+        const SYSTEM_PEPPER = "SunChat_E2EE_V26_SuperSecure_Pepper_@2026!"; 
         const LIFESPAN_MS = (12 * 60 * 60 * 1000) + (1 * 60 * 1000); 
         
         let roomID = new URLSearchParams(window.location.search).get('room');
@@ -498,7 +498,17 @@
         function connectMQTT() {
             appendSysMessage('系统', '正在连接隐秘通道...');
             mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: 'sun_' + Math.random().toString(16).substr(2, 8) });
-            mqttClient.on('connect', () => { appendSysMessage('系统', '✨ 已建立私密直连。信息将于12小时后自动粉碎。'); mqttClient.subscribe(TOPIC); mqttClient.subscribe(TOPIC_ANNOUNCE); });
+            mqttClient.on('connect', () => { 
+                appendSysMessage('系统', '✨ 已建立私密直连。信息将于12小时后自动粉碎。'); 
+                mqttClient.subscribe(TOPIC); mqttClient.subscribe(TOPIC_ANNOUNCE); 
+                
+                // 点对点同步引擎：新用户上线，立刻向房间内发出隐形同步请求
+                setTimeout(async () => {
+                    const reqPayload = JSON.stringify({ type: 'sync_req', timestamp: Date.now() });
+                    const encryptedPayload = await CryptoService.encrypt(reqPayload);
+                    mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload }));
+                }, 800);
+            });
 
             mqttClient.on('message', async (topic, message) => {
                 try {
@@ -507,6 +517,36 @@
 
                     if (topic === TOPIC_ANNOUNCE) { if (payload.type === 'announce_list') { announcements = payload.content; await syncToStorage(); renderAnnouncements(); notifyNewMessage();} return; }
                     if (wrapper.senderData && wrapper.senderData.name === currentUser.name) return; 
+
+                    // 点对点同步引擎：老用户收到请求，立刻在后台分享已加密的本地历史记录
+                    if (payload.type === 'sync_req') {
+                        if (localMessages.length > 0) {
+                            setTimeout(async () => {
+                                const ackPayload = JSON.stringify({ type: 'sync_ack', content: localMessages, timestamp: Date.now() });
+                                const encryptedAck = await CryptoService.encrypt(ackPayload);
+                                mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload: encryptedAck }));
+                            }, Math.random() * 600); // 轻微错峰发送防止拥堵
+                        }
+                        return;
+                    }
+
+                    // 点对点同步引擎：新用户收到历史记录，无缝拼接到本地
+                    if (payload.type === 'sync_ack') {
+                        let added = false;
+                        payload.content.forEach(remoteMsg => {
+                            const exists = localMessages.some(m => m.timestamp === remoteMsg.timestamp && m.senderData.name === remoteMsg.senderData.name);
+                            if (!exists && (Date.now() - remoteMsg.timestamp < LIFESPAN_MS)) {
+                                localMessages.push(remoteMsg); added = true;
+                            }
+                        });
+                        if (added) {
+                            localMessages.sort((a,b) => a.timestamp - b.timestamp);
+                            document.getElementById('messages').innerHTML = ''; // 清空重新按时间线渲染
+                            localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp));
+                            syncToStorage();
+                        }
+                        return;
+                    }
                     
                     let senderInfo = wrapper.senderData;
                     if (!senderInfo || typeof senderInfo === 'string') {
