@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- PWA 核心标签 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="有点儿意思">
     <meta name="theme-color" content="#FFB52E">
-    <title>☀️ 有点儿意思</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7imIA8L3RleHQ+PC9zdmc+">
+    <title>🌞 有点儿意思</title>
+    <!-- 使用 Twitter 的标准高分辨率太阳作为 Favicon -->
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">
+    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">
     
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://broker.emqx.io" crossorigin>
@@ -34,10 +34,8 @@
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
             background: linear-gradient(135deg, var(--sun-bg-light) 0%, var(--sun-bg-dark) 100%);
-            color: var(--text-main); 
-            display: flex; justify-content: center; align-items: center; 
-            height: 100vh; height: 100dvh; 
-            overflow: hidden; position: relative;
+            color: var(--text-main); display: flex; justify-content: center; align-items: center; 
+            height: 100vh; height: 100dvh; overflow: hidden; position: relative;
             -webkit-font-smoothing: antialiased; 
         }
 
@@ -57,8 +55,7 @@
             border: 1px solid rgba(255,255,255,0.5); border-bottom-color: rgba(255,255,255,0.2); border-right-color: rgba(255,255,255,0.2);
             box-shadow: 0 20px 50px rgba(180, 100, 0, 0.2), inset 2px 2px 5px rgba(255,255,255,0.5);
             animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            display: flex; flex-direction: column; align-items: center;
-            transform: translateZ(0);
+            display: flex; flex-direction: column; align-items: center; transform: translateZ(0);
         }
         .auth-card h2 { margin: 0 0 10px 0; font-size: 28px; font-weight: 700; display: flex; justify-content: center; align-items: center; gap: 8px;}
         .auth-card p { margin: 0 0 32px 0; font-size: 15px; opacity: 0.85; letter-spacing: 2px; text-align: center; }
@@ -68,8 +65,7 @@
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.1) 100%);
             border: 1px solid rgba(255, 255, 255, 0.6); border-bottom-color: rgba(255, 255, 255, 0.1); border-right-color: rgba(255, 255, 255, 0.1);
             box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.8), inset -3px -3px 7px rgba(0, 0, 0, 0.04), 0 6px 15px rgba(0, 0, 0, 0.05);
-            color: var(--text-main); font-size: 16px; font-weight: 500;
-            text-align: center; outline: none; margin-bottom: 24px; 
+            color: var(--text-main); font-size: 16px; font-weight: 500; text-align: center; outline: none; margin-bottom: 24px; 
             transform: translateZ(0); will-change: background, border-color; transition: background 0.2s, border-color 0.2s;
         }
         .glass-input::placeholder { color: rgba(74, 48, 0, 0.5); text-align: center; }
@@ -80,8 +76,7 @@
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
             border: 1px solid rgba(255, 255, 255, 0.6); border-bottom-color: rgba(255, 255, 255, 0.1); border-right-color: rgba(255, 255, 255, 0.1);
             box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.8), inset -3px -3px 7px rgba(0, 0, 0, 0.05), 0 8px 20px rgba(0, 0, 0, 0.08);
-            color: var(--text-main); font-size: 16px; font-weight: bold; cursor: pointer; 
-            display: flex; justify-content: center; align-items: center; gap: 6px;
+            color: var(--text-main); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px;
             transform: translateZ(0); transition: all 0.15s ease-out;
         }
         .glass-btn:active { 
@@ -91,19 +86,10 @@
             border-top-color: rgba(255,255,255,0.2); border-left-color: rgba(255,255,255,0.2);
         }
 
-        /* 专门适配 PWA 安装按钮的样式 */
-        #install-btn {
-            display: none; /* 默认隐藏，条件触发 */
-            margin-top: 25px; 
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
-            border: 1px solid #fff;
-            color: #cc4a00; font-size: 14px;
-            box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 1), 0 8px 25px rgba(200, 80, 0, 0.2);
-        }
+        #install-btn { display: none; margin-top: 25px; background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%); border: 1px solid #fff; color: #cc4a00; font-size: 14px; box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 1), 0 8px 25px rgba(200, 80, 0, 0.2); }
 
         .btn-group { display: flex; gap: 10px; width: 100%; }
         .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
-
         .btn-text-announce { background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: inset 2px 2px 6px rgba(255, 255, 255, 0.9), inset -3px -3px 6px rgba(0, 0, 0, 0.05), 0 8px 15px rgba(0, 0, 0, 0.05); color: var(--text-main); }
         .btn-text-announce:active { background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.6) 100%); box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.06), inset -4px -4px 8px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.02); }
         .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.65) 0%, rgba(255, 90, 0, 0.25) 100%); border: 1px solid rgba(255, 200, 100, 0.6); border-bottom-color: rgba(255, 100, 0, 0.2); box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.6), inset -3px -3px 6px rgba(200, 50, 0, 0.2), 0 8px 15px rgba(255, 100, 0, 0.15); color: #fff; text-shadow: 0 1px 2px rgba(150, 50, 0, 0.4); }
@@ -113,6 +99,7 @@
         @media (max-width: 768px) { #chat-container { height: 100vh; height: 100dvh; border-radius: 0; border: none; } }
         
         #header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.3); font-weight: 600; font-size: 18px; padding-top: max(18px, env(safe-area-inset-top)); background: rgba(255,255,255,0.15); box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .header-user-badge { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; background: rgba(255,255,255,0.4); padding: 4px 12px 4px 6px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
         
         #announcement-bar { display: none; flex-direction: column; gap: 8px; padding: 12px 25px; border-bottom: 1px solid rgba(255,255,255,0.2); background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); max-height: 30vh; overflow-y: auto; -webkit-overflow-scrolling: touch;}
         .announce-item { font-size: 13px; color: var(--text-main); opacity: 0.95; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.5; }
@@ -120,14 +107,23 @@
         .announce-content { flex: 1; word-break: break-all; display: flex; flex-direction: column; }
         .announce-img { max-width: 100%; border-radius: 8px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-        #messages { flex: 1; padding: 20px 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; -webkit-overflow-scrolling: touch; }
-        .message { padding: 12px 18px; border-radius: 20px; max-width: 78%; word-break: break-all; font-size: 15px; line-height: 1.5; position: relative; transform: translateZ(0); }
-        .msg-sys { text-align: center; font-size: 0.85em; align-self: center; border-radius: 14px; padding: 8px 18px; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: rgba(74, 48, 0, 0.85); }
-        .msg-self { background: rgba(255, 255, 255, 0.85); align-self: flex-end; border-bottom-right-radius: 4px; border: 1px solid #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
-        .msg-other { background: rgba(255, 255, 255, 0.45); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 4px 15px rgba(0,0,0,0.03); }
-        .msg-sender { font-size: 0.75em; opacity: 0.65; margin-bottom: 6px; display: block; font-weight: 600; }
+        #messages { flex: 1; padding: 20px 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; }
+        
+        /* --- 零延迟原生头像引擎 --- */
+        .msg-row { display: flex; width: 100%; gap: 12px; align-items: flex-end; transform: translateZ(0); }
+        .msg-row-self { flex-direction: row-reverse; }
+        .msg-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.8); box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 1px 1px 3px rgba(255,255,255,0.5); z-index: 2;}
+        .msg-body { max-width: calc(100% - 65px); display: flex; flex-direction: column; }
+        .msg-body-self { align-items: flex-end; }
+        .msg-body-other { align-items: flex-start; }
+        
+        .message { padding: 12px 18px; border-radius: 20px; word-break: break-all; font-size: 15px; line-height: 1.5; position: relative; }
+        .msg-sys { text-align: center; font-size: 0.85em; align-self: center; border-radius: 14px; padding: 8px 18px; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 1px 1px 2px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.03); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: rgba(74, 48, 0, 0.85); width: fit-content; margin: 0 auto;}
+        .msg-self { background: rgba(255, 255, 255, 0.85); border-bottom-right-radius: 6px; border: 1px solid #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.04); }
+        .msg-other { background: rgba(255, 255, 255, 0.45); border-bottom-left-radius: 6px; border: 1px solid rgba(255,255,255,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 4px 15px rgba(0,0,0,0.03); }
+        .msg-sender { font-size: 0.75em; opacity: 0.65; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 0 6px; }
         .msg-img { max-width: 100%; border-radius: 12px; margin-top: 6px; display: block; border: 1px solid rgba(255,255,255,0.5); }
-        .countdown-timer { font-size: 11px; opacity: 0.55; margin-left: 10px; font-family: -apple-system-monospaced, monospace; white-space: nowrap; font-weight: 500; flex-shrink: 0; }
+        .countdown-timer { font-size: 11px; opacity: 0.55; font-family: -apple-system-monospaced, monospace; white-space: nowrap; font-weight: 500; flex-shrink: 0; }
 
         #input-area { display: flex; gap: 10px; padding: 15px 25px; border-top: 1px solid rgba(255,255,255,0.3); padding-bottom: max(15px, env(safe-area-inset-bottom)); align-items: center; background: rgba(255,255,255,0.15); box-shadow: 0 -4px 15px rgba(0,0,0,0.02); }
         
@@ -169,11 +165,10 @@
 
     <div id="auth-overlay" class="overlay">
         <div class="auth-card">
-            <h2>☀️ 有点儿意思</h2>
+            <h2>🌞 有点儿意思</h2>
             <p>✨ 🛸 🪐 探索无界 · 发现奇趣 🚀 🌌</p>
             <input type="password" id="pwd-input" class="glass-input" placeholder="请输入访问密钥" autocomplete="off">
             <button id="pwd-btn" class="glass-btn">验证并进入</button>
-            <!-- 专属的 PWA 桌面安装按钮，满足条件即会显示 -->
             <button id="install-btn" class="glass-btn">⏬ 将此应用安装到桌面 / 浏览器</button>
         </div>
     </div>
@@ -193,8 +188,8 @@
 
     <div id="chat-container">
         <div id="header">
-            <span>☀️ 有点儿意思</span>
-            <span id="user-info" style="opacity: 0.8; font-size: 14px; font-weight: 500;"></span>
+            <span>🌞 有点儿意思</span>
+            <div id="user-info" class="header-user-badge"></div>
         </div>
         
         <div id="announcement-bar"></div>
@@ -203,61 +198,77 @@
         <div id="input-area">
             <div class="action-btn icon-btn" id="send-img-btn" title="发送图片">📷</div>
             <div class="action-btn icon-btn" id="announce-btn" title="发布公告面板">📢</div>
-            <input type="text" id="msg-input" maxlength="3000" placeholder="输入消息..." autocomplete="off">
+            <input type="text" id="msg-input" maxlength="3000" placeholder="发送奇思妙想..." autocomplete="off">
             <div class="action-btn" id="send-btn">发送</div>
             <input type="file" id="file-input" accept="image/*">
         </div>
     </div>
 
     <script>
-        // --- 核心 PWA 安装与离线服务注册逻辑 ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(() => {
-                    console.log('SW registration missed, normal for localhost/http without https');
-                });
+                navigator.serviceWorker.register('./sw.js').catch(()=>{});
             });
         }
 
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // 环境支持安装 APP 时，展现安装按钮
+            e.preventDefault(); deferredPrompt = e;
             document.getElementById('install-btn').style.display = 'flex';
         });
-
         document.getElementById('install-btn').addEventListener('click', async () => {
             if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                document.getElementById('install-btn').style.display = 'none';
+                deferredPrompt.prompt(); await deferredPrompt.userChoice;
+                deferredPrompt = null; document.getElementById('install-btn').style.display = 'none';
             }
         });
 
-        const SYSTEM_PEPPER = "SunChat_E2EE_V14_SuperSecure_Pepper_@2026!"; 
+        const SYSTEM_PEPPER = "SunChat_E2EE_V15_SuperSecure_Pepper_@2026!"; 
         const LIFESPAN_MS = (12 * 60 * 60 * 1000) + (1 * 60 * 1000); 
         
         let roomID = new URLSearchParams(window.location.search).get('room');
         if (!roomID) {
-            roomID = Array.from(window.crypto.getRandomValues(new Uint8Array(8)))
-                .map(b => b.toString(16).padStart(2, '0')).join('');
+            roomID = Array.from(window.crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, '0')).join('');
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?room=' + roomID;
             window.history.replaceState({path: newUrl}, '', newUrl);
         }
         
         const TOPIC = "sun-e2ee-room-" + roomID;
         const TOPIC_ANNOUNCE = TOPIC + "-announce";
+
+        // --- 趣味生成引擎 (名字 + 零卡顿头像) ---
+        const IdentityEngine = {
+            adjs: ["迷糊的", "傲娇的", "干饭的", "神奇的", "快乐的", "打呼噜的", "闪亮的", "胖乎乎的", "萌萌的", "无敌的"],
+            nouns: ["橘猫", "柴犬", "柯基", "水豚", "小土豆", "小海豹", "企鹅", "树懒", "霸王龙", "哈士奇"],
+            emojis: ['🐱', '🐶', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐸', '🐵', '🐧', '🦉', '🦦', '🦥'],
+            colors: ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#D4A5A5', '#E0BBE4', '#FFC8A2', '#D5E8D4'],
+            
+            generate() {
+                const adj = this.adjs[Math.floor(Math.random() * this.adjs.length)];
+                const noun = this.nouns[Math.floor(Math.random() * this.nouns.length)];
+                const id = Math.floor(Math.random() * 99) + 1; // 加数字防重名
+                const emoji = this.emojis[Math.floor(Math.random() * this.emojis.length)];
+                const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                return { name: `${adj}${noun}_${id}`, avatarEmoji: emoji, avatarColor: color };
+            },
+            
+            // 如果收到老数据没有头像，或者掉线重连，通过名字哈希确定一个固定的可爱头像
+            deriveFromName(nameStr) {
+                let hash = 0;
+                for(let i = 0; i < nameStr.length; i++) hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+                return {
+                    avatarEmoji: this.emojis[Math.abs(hash) % this.emojis.length],
+                    avatarColor: this.colors[Math.abs(hash) % this.colors.length]
+                };
+            }
+        };
         
         const CryptoService = {
             key: null,
             async initKey(shortPassword) {
                 const enc = new TextEncoder();
-                const combinedKeyMaterial = shortPassword + SYSTEM_PEPPER;
-                
                 const keyMaterial = await window.crypto.subtle.importKey(
-                    "raw", enc.encode(combinedKeyMaterial), { name: "PBKDF2" }, false, ["deriveKey"]
+                    "raw", enc.encode(shortPassword + SYSTEM_PEPPER), { name: "PBKDF2" }, false, ["deriveKey"]
                 );
                 this.key = await window.crypto.subtle.deriveKey(
                     { name: "PBKDF2", salt: enc.encode(roomID), iterations: 100000, hash: "SHA-256" },
@@ -284,9 +295,7 @@
         const StorageService = {
             async save(messages, announcements) {
                 if (!CryptoService.key) return;
-                const payload = JSON.stringify({ msgs: messages, ann: announcements });
-                const encryptedData = await CryptoService.encrypt(payload);
-                localStorage.setItem('sun_secure_vault_' + roomID, encryptedData);
+                localStorage.setItem('sun_secure_vault_' + roomID, await CryptoService.encrypt(JSON.stringify({ msgs: messages, ann: announcements })));
             },
             async load() {
                 const raw = localStorage.getItem('sun_secure_vault_' + roomID);
@@ -298,7 +307,7 @@
         };
 
         let mqttClient;
-        let username;
+        let currentUser; 
         let localMessages = [];
         let announcements = [];
         let isUploadingAnnounceImg = false; 
@@ -310,7 +319,8 @@
                 localMessages = (data.msgs || []).filter(m => now - m.timestamp < LIFESPAN_MS);
                 announcements = (data.ann || []).filter(a => now - a.timestamp < LIFESPAN_MS);
                 
-                localMessages.forEach(m => renderMessage(m.type, m.sender, m.content, m.timestamp));
+                // 本地加载历史渲染
+                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp));
                 renderAnnouncements();
             } catch(e) {}
         }
@@ -323,22 +333,17 @@
         function updateCountdowns() {
             const now = Date.now();
             let needsSync = false;
-            
             document.querySelectorAll('.time-tracker').forEach(el => {
                 const ts = parseInt(el.getAttribute('data-ts'));
                 const diff = (ts + LIFESPAN_MS) - now;
-                
                 if (diff <= 0) {
-                    const parentRow = el.closest('.message, .announce-item');
-                    if(parentRow) parentRow.remove();
-                    needsSync = true;
+                    const parentRow = el.closest('.msg-row, .msg-sys, .announce-item');
+                    if(parentRow) parentRow.remove(); needsSync = true;
                 } else {
-                    const h = Math.floor(diff / 3600000);
-                    const m = Math.floor((diff % 3600000) / 60000);
+                    const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000);
                     el.innerText = `⏳ 剩 ${h}h ${m}m`;
                 }
             });
-
             if(needsSync) cleanExpiredData();
         }
         setInterval(updateCountdowns, 10000);
@@ -357,18 +362,15 @@
 
         async function verifyAndEnter() {
             const pwd = pwdInput.value.trim();
-            if (!pwd) {
-                pwdInput.placeholder = '密码不可为空';
-                setTimeout(() => pwdInput.placeholder = '请输入访问密钥', 1500); return;
-            }
+            if (!pwd) { pwdInput.placeholder = '密码不可为空'; setTimeout(() => pwdInput.placeholder = '请输入访问密钥', 1500); return; }
             
             pwdBtn.innerText = "进入中...";
             await CryptoService.initKey(pwd); 
-            username = "U_" + Math.random().toString(36).substring(2, 6).toUpperCase();
+            currentUser = IdentityEngine.generate();
             
             authOverlay.style.display = 'none';
             document.getElementById('chat-container').style.display = 'flex';
-            document.getElementById('user-info').innerText = username;
+            document.getElementById('user-info').innerHTML = `<div class="msg-avatar" style="width: 28px; height: 28px; font-size: 16px; background: ${currentUser.avatarColor}; border-width: 1px; box-shadow: none;">${currentUser.avatarEmoji}</div> ${currentUser.name}`;
             
             await initSecureContext();
             connectMQTT(); updateCountdowns();
@@ -381,46 +383,27 @@
         const adminPwdInput = document.getElementById('admin-pwd-input');
         const adminTextInput = document.getElementById('admin-text-input');
         
-        document.getElementById('announce-btn').addEventListener('click', () => {
-            adminOverlay.style.display = 'flex'; 
-            adminPwdInput.focus();
-        });
+        document.getElementById('announce-btn').addEventListener('click', () => { adminOverlay.style.display = 'flex'; adminPwdInput.focus(); });
 
         function checkAdminPwd() {
-            if (adminPwdInput.value.trim() !== "5214") {
-                alert("只有管理员才可以发布通告"); 
-                adminPwdInput.value = ''; 
-                return false;
-            }
-            return true;
+            if (adminPwdInput.value.trim() !== "5214") { alert("只有管理员才可以发布通告"); adminPwdInput.value = ''; return false; } return true;
         }
 
         document.getElementById('admin-confirm-text-btn').addEventListener('click', () => {
             if (!checkAdminPwd()) return;
             const text = adminTextInput.value.trim();
             if (!text) return alert("请先在上方输入文字内容");
-            
-            adminOverlay.style.display = 'none'; 
-            adminPwdInput.value = ''; 
-            adminTextInput.value = '';
+            adminOverlay.style.display = 'none'; adminPwdInput.value = ''; adminTextInput.value = '';
             sendEncryptedPacket('text', text, true);
         });
 
         document.getElementById('admin-confirm-img-btn').addEventListener('click', () => {
             if (!checkAdminPwd()) return;
-            adminOverlay.style.display = 'none'; 
-            adminPwdInput.value = ''; 
-            adminTextInput.value = '';
-            
-            isUploadingAnnounceImg = true;
-            document.getElementById('file-input').click();
+            adminOverlay.style.display = 'none'; adminPwdInput.value = ''; adminTextInput.value = '';
+            isUploadingAnnounceImg = true; document.getElementById('file-input').click();
         });
 
-        document.getElementById('admin-cancel-btn').addEventListener('click', () => { 
-            adminOverlay.style.display = 'none'; 
-            adminPwdInput.value = ''; 
-            adminTextInput.value = ''; 
-        });
+        document.getElementById('admin-cancel-btn').addEventListener('click', () => { adminOverlay.style.display = 'none'; adminPwdInput.value = ''; adminTextInput.value = ''; });
 
         function connectMQTT() {
             appendSysMessage('系统', '正在连接隐秘通道...');
@@ -447,10 +430,18 @@
                         return;
                     }
 
-                    if (wrapper.sender === username) return; 
+                    if (wrapper.senderData && wrapper.senderData.name === currentUser.name) return; 
                     
-                    localMessages.push({ type: payload.type, sender: wrapper.sender, content: payload.content, timestamp: payload.timestamp });
-                    await syncToStorage(); renderMessage(payload.type, wrapper.sender, payload.content, payload.timestamp);
+                    // 兼容老格式或丢失头像包的情况
+                    let senderInfo = wrapper.senderData;
+                    if (!senderInfo || typeof senderInfo === 'string') {
+                        const sName = typeof senderInfo === 'string' ? senderInfo : (wrapper.sender || "神秘人");
+                        const derived = IdentityEngine.deriveFromName(sName);
+                        senderInfo = { name: sName, avatarEmoji: derived.avatarEmoji, avatarColor: derived.avatarColor };
+                    }
+                    
+                    localMessages.push({ type: payload.type, senderData: senderInfo, content: payload.content, timestamp: payload.timestamp });
+                    await syncToStorage(); renderMessage(payload.type, senderInfo, payload.content, payload.timestamp);
                 } catch (error) {}
             });
         }
@@ -460,21 +451,21 @@
             const ts = Date.now();
             
             if (isAnnounce) {
-                announcements.push({ type: type, content: content, sender: username, timestamp: ts });
+                announcements.push({ type: type, content: content, senderData: currentUser, timestamp: ts });
                 if (announcements.length > 3) announcements.shift(); 
                 await syncToStorage(); renderAnnouncements();
                 
                 const internalPayload = JSON.stringify({ type: 'announce_list', content: announcements, timestamp: ts });
                 const encryptedPayload = await CryptoService.encrypt(internalPayload);
-                mqttClient.publish(TOPIC_ANNOUNCE, JSON.stringify({ sender: username, encryptedPayload }), { retain: true });
+                mqttClient.publish(TOPIC_ANNOUNCE, JSON.stringify({ senderData: currentUser, encryptedPayload }), { retain: true });
                 appendSysMessage('系统', '📢 已发布公告');
             } else {
-                localMessages.push({ type: type, sender: username, content: content, timestamp: ts });
-                await syncToStorage(); renderMessage(type, username, content, ts); 
+                localMessages.push({ type: type, senderData: currentUser, content: content, timestamp: ts });
+                await syncToStorage(); renderMessage(type, currentUser, content, ts); 
                 
                 const internalPayload = JSON.stringify({ type: type, content: content, timestamp: ts });
                 const encryptedPayload = await CryptoService.encrypt(internalPayload);
-                mqttClient.publish(TOPIC, JSON.stringify({ sender: username, encryptedPayload }));
+                mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload }));
             }
         }
 
@@ -485,10 +476,7 @@
             input.value = ''; sendEncryptedPacket('text', text, isAnnounce);
         }
 
-        document.getElementById('send-img-btn').addEventListener('click', () => {
-            isUploadingAnnounceImg = false; 
-            document.getElementById('file-input').click();
-        });
+        document.getElementById('send-img-btn').addEventListener('click', () => { isUploadingAnnounceImg = false; document.getElementById('file-input').click(); });
 
         document.getElementById('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
@@ -499,9 +487,7 @@
                     const canvas = document.createElement('canvas');
                     let w = img.width, h = img.height;
                     if (w > 800) { h = Math.round((h * 800) / w); w = 800; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    
+                    canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                     sendEncryptedPacket('image', canvas.toDataURL('image/jpeg', 0.6), isUploadingAnnounceImg);
                     isUploadingAnnounceImg = false; 
                 }
@@ -512,21 +498,34 @@
 
         function appendSysMessage(sender, text) {
             const container = document.getElementById('messages');
-            const div = document.createElement('div'); div.className = `message msg-sys`; div.innerText = text;
+            const div = document.createElement('div'); div.className = `msg-sys`; div.innerText = text;
             container.appendChild(div); container.scrollTop = container.scrollHeight;
         }
 
-        function renderMessage(type, sender, content, timestamp) {
+        // --- 全新丝滑头像排版引擎 ---
+        function renderMessage(type, senderData, content, timestamp) {
             const container = document.getElementById('messages');
-            const div = document.createElement('div');
-            div.className = `message ${sender === username ? 'msg-self' : 'msg-other'}`;
+            
+            // 兼容性提取
+            const isSelf = senderData.name === currentUser.name;
+            const sName = senderData.name;
+            const sEmoji = senderData.avatarEmoji || '❓';
+            const sColor = senderData.avatarColor || '#ccc';
+
+            const msgRow = document.createElement('div');
+            msgRow.className = `msg-row ${isSelf ? 'msg-row-self' : ''}`;
             
             const safeContent = type === 'text' ? content.replace(/</g, "&lt;") : '';
-            let inner = `<span class="msg-sender">${sender} <span class="countdown-timer time-tracker" data-ts="${timestamp}"></span></span>`;
-            if (type === 'text') inner += safeContent;
-            else if (type === 'image') inner += `<img class="msg-img" src="${content}">`;
+            const msgBodyHtml = type === 'text' ? safeContent : `<img class="msg-img" src="${content}">`;
             
-            div.innerHTML = inner; container.appendChild(div); container.scrollTop = container.scrollHeight; updateCountdowns(); 
+            msgRow.innerHTML = `
+                <div class="msg-avatar" style="background: ${sColor};">${sEmoji}</div>
+                <div class="msg-body ${isSelf ? 'msg-body-self' : 'msg-body-other'}">
+                    <span class="msg-sender">${isSelf ? '<span class="countdown-timer time-tracker" data-ts="'+timestamp+'"></span>' : ''} ${sName} ${!isSelf ? '<span class="countdown-timer time-tracker" data-ts="'+timestamp+'"></span>' : ''}</span>
+                    <div class="message ${isSelf ? 'msg-self' : 'msg-other'}">${msgBodyHtml}</div>
+                </div>
+            `;
+            container.appendChild(msgRow); container.scrollTop = container.scrollHeight; updateCountdowns(); 
         }
 
         function renderAnnouncements() {
@@ -535,15 +534,8 @@
             bar.style.display = 'flex';
             bar.innerHTML = announcements.map(a => {
                 const isImage = a.type === 'image';
-                const contentHtml = isImage 
-                    ? `<img class="announce-img" src="${a.content}">` 
-                    : (a.content || a.text || "").replace(/</g, "&lt;");
-                    
-                return `<div class="announce-item">
-                            <span class="announce-badge">📢</span>
-                            <div class="announce-content">${contentHtml}</div>
-                            <span class="countdown-timer time-tracker" data-ts="${a.timestamp}"></span>
-                        </div>`;
+                const contentHtml = isImage ? `<img class="announce-img" src="${a.content}">` : (a.content || a.text || "").replace(/</g, "&lt;");
+                return `<div class="announce-item"><span class="announce-badge">📢</span><div class="announce-content">${contentHtml}</div><span class="countdown-timer time-tracker" data-ts="${a.timestamp}"></span></div>`;
             }).join('');
             updateCountdowns();
         }
