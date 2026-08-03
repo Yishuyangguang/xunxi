@@ -1,6 +1,7 @@
 <!DOCTYPE html><html lang="zh-CN"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">    <link rel="manifest" id="dynamic-manifest">    <meta name="apple-mobile-web-app-capable" content="yes">    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <meta name="apple-mobile-web-app-title" content="有点儿意思">    <meta name="theme-color" content="#FFB703">    <title>🌞 有点儿意思</title>    <link rel="apple-touch-icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">    <link rel="icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">        <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>    <link rel="preconnect" href="https://broker.emqx.io" crossorigin>    <script src="https://fastly.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>        <style>        :root {            --text-main: #5C3A21;            --sun-gold-light: #FFDA77;            --sun-gold-mid: #FFB703;            --sun-gold-dark: #FB8500;        }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
         
+        /* 核心修复：针对苹果手机，使用固定定位和 100dvh 锁死视窗，防止键盘弹起时页面整体上下漂移或下沉 */
         html, body { 
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
             background-color: var(--sun-gold-mid);
@@ -35,24 +36,22 @@
             transform: translate3d(0,0,0); will-change: transform;
         }
 
-        /* 核心修复：所有弹出层完美恢复 fixed 居中，并允许在键盘弹起时纵向滚动，防止内容被吃掉 */
         .overlay { 
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; 
             display: flex; justify-content: center; align-items: center; flex-direction: column;
-            z-index: 9999; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.25);
+            z-index: 9999; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.15);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
 
-        #lightbox-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10001; cursor: zoom-out; }
+        #lightbox-overlay { display: none; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10001; cursor: zoom-out; }
         #lightbox-img { max-width: 95%; max-height: 90%; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         #lightbox-overlay.active #lightbox-img { transform: scale(1); }
 
         .auth-card { 
-            border-radius: 36px; padding: 35px 30px; width: 100%; max-width: 360px; 
+            border-radius: 36px; padding: 40px 30px; width: 100%; max-width: 360px; 
             animation: scaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             display: flex; flex-direction: column; align-items: center; position: relative;
-            max-height: 85vh; overflow-y: auto; /* 保证键盘弹起时卡片本身可以内部滚动，输入框永不超出视线 */
+            max-height: 85vh; overflow-y: auto; /* 防止在苹果手机键盘弹起时登录框被挤压截断 */
         }
 
         .text-black-gold {
@@ -71,7 +70,7 @@
         .logo-3d-mini { display: flex; align-items: center; gap: 6px; font-size: 20px;}
         .cute-sun { width: 34px; height: 34px; filter: drop-shadow(0 4px 6px rgba(180, 80, 0, 0.3)); }
         .cute-sun-mini { width: 24px; height: 24px; filter: drop-shadow(0 2px 4px rgba(180, 80, 0, 0.3)); }
-        .auth-card p { margin: 0 0 20px 0; font-size: 14px; color: rgba(92, 58, 33, 0.8); letter-spacing: 2px; text-align: center; font-weight: 500;}
+        .auth-card p { margin: 0 0 25px 0; font-size: 14px; color: rgba(92, 58, 33, 0.8); letter-spacing: 2px; text-align: center; font-weight: 500;}
 
         .glass-input {
             width: 100%; padding: 14px 20px; border-radius: 20px; 
@@ -106,7 +105,7 @@
         .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.7) 0%, rgba(255, 90, 0, 0.3) 100%); border-top-color: rgba(255,200,100,0.9); color: #fff; }
 
         #admin-overlay, #burn-overlay, #del-announce-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .auth-card-modal { max-width: 420px; padding: 30px 25px; }
+        .auth-card-modal { max-width: 420px; padding: 35px 25px; }
         .close-btn { position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; border-radius: 15px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
@@ -288,9 +287,9 @@
     <div id="admin-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('admin-overlay').style.display='none'">×</div>
-            <h3 style="margin: 0 0 20px 0; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">管理员专属通道</h3>
-            <textarea id="admin-text-input" class="glass-input" placeholder="输入全频位置顶公告 (支持5000字)" maxlength="5000" style="height: 100px; resize: none; text-align: left; padding: 15px; border-radius: 20px;"></textarea>
-            <input type="password" id="admin-pwd-input" class="glass-input" placeholder="验证管理密码" autocomplete="off" style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 25px 0; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">管理员专属通道</h3>
+            <textarea id="admin-text-input" class="glass-input" placeholder="输入全频位置顶公告 (支持5000字)" maxlength="5000" style="height: 120px; resize: none; text-align: left; padding: 18px; border-radius: 22px;"></textarea>
+            <input type="password" id="admin-pwd-input" class="glass-input" placeholder="验证管理密码" autocomplete="off" style="margin-bottom: 25px;">
             <div class="btn-group">
                 <button id="admin-confirm-text-btn" class="glass-btn" style="flex: 1;">📝 发文字</button>
                 <button id="admin-confirm-img-btn" class="glass-btn btn-img-announce" style="flex: 1;">🖼️ 发图片</button>
@@ -300,9 +299,9 @@
     <div id="del-announce-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('del-announce-overlay').style.display='none'">×</div>
-            <h3 style="margin: 0 0 15px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🗑️ 删除置顶公告</h3>
-            <p id="del-announce-info" style="margin-bottom: 15px; font-size: 13px; text-align: center; color: var(--text-main); opacity: 0.9; word-break: break-all;"></p>
-            <input type="password" id="del-announce-pwd" class="glass-input" placeholder="输入管理员密码 (5214)" autocomplete="off" style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 20px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🗑️ 删除置顶公告</h3>
+            <p id="del-announce-info" style="margin-bottom: 20px; font-size: 13px; text-align: center; color: var(--text-main); opacity: 0.9; word-break: break-all;"></p>
+            <input type="password" id="del-announce-pwd" class="glass-input" placeholder="输入管理员密码 (5214)" autocomplete="off" style="margin-bottom: 25px;">
             <div class="btn-group">
                 <button class="glass-btn btn-cancel" style="flex: 1;" onclick="document.getElementById('del-announce-overlay').style.display='none'">取消</button>
                 <button id="del-announce-confirm-btn" class="glass-btn" style="flex: 1; color: #D96000;">确认删除</button>
@@ -312,9 +311,9 @@
     <div id="burn-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('burn-overlay').style.display='none'">×</div>
-            <h3 style="margin: 0 0 15px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🔥 危险操作</h3>
-            <p style="margin-bottom: 20px; font-size: 14px; text-align: center; color: var(--text-main); opacity: 0.9;">此操作将彻底焚毁本地及云端的所有聊天记录，且不可逆转。</p>
-            <input type="password" id="burn-pwd-input" class="glass-input" placeholder="输入管理员密码" autocomplete="off" style="margin-bottom: 20px;">
+            <h3 style="margin: 0 0 20px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🔥 危险操作</h3>
+            <p style="margin-bottom: 25px; font-size: 14px; text-align: center; color: var(--text-main); opacity: 0.9;">此操作将彻底焚毁本地及云端的所有聊天记录，且不可逆转。</p>
+            <input type="password" id="burn-pwd-input" class="glass-input" placeholder="输入管理员密码" autocomplete="off" style="margin-bottom: 25px;">
             <div class="btn-group">
                 <button class="glass-btn btn-cancel" style="flex: 1;" onclick="document.getElementById('burn-overlay').style.display='none'">取消</button>
                 <button id="burn-confirm-btn" class="glass-btn" style="flex: 1; color: #D96000;">确认焚毁</button>
@@ -399,30 +398,24 @@
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         msgInput.addEventListener('input', function() { this.style.height = '44px'; this.style.height = Math.min(this.scrollHeight, 110) + 'px'; });
 
-        // --- 核心修复：苹果手机视觉视窗动态缩放与键盘顶起处理 ---
+        // --- 核心修复：彻底禁绝苹果手机键盘弹起时页面的整体下沉与错位 ---
         if (window.visualViewport) {
-            const handleResize = () => {
-                const height = window.visualViewport.height;
-                document.body.style.height = height + 'px';
-                document.querySelectorAll('.overlay').forEach(el => {
-                    el.style.height = height + 'px';
-                });
-                const chatContainer = document.getElementById('chat-container');
-                if (chatContainer.style.display !== 'none') {
-                    chatContainer.style.height = height + 'px';
-                }
+            const preventScrollOnKeyboard = () => {
+                window.scrollTo(0, 0);
             };
-            window.visualViewport.addEventListener('resize', handleResize);
-            window.visualViewport.addEventListener('scroll', handleResize);
+            window.visualViewport.addEventListener('resize', preventScrollOnKeyboard);
+            window.visualViewport.addEventListener('scroll', preventScrollOnKeyboard);
         }
 
-        // 当任意输入框聚焦时，利用 scrollIntoView 确保该输入框自动滚动到键盘正上方可见区域
-        document.addEventListener('focusin', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        // 针对输入框获得焦点时强制页面滚动归零，解决苹果 Safari 键盘把整个网页往上顶、顶部被吃掉的问题
+        const allInputs = document.querySelectorAll('input, textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('focus', () => {
                 setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
-            }
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
+                }, 50);
+            });
         });
 
         toggleMenuBtn.addEventListener('click', () => {
@@ -474,7 +467,7 @@
             try {
                 const data = await StorageService.load(); const now = Date.now();
                 localMessages = (data.msgs || []).filter(m => now - m.timestamp < LIFESPAN_MS); announcements = (data.ann || []).filter(a => now - a.timestamp < LIFESPAN_MS);
-                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp)); announcements.forEach(a => renderAnnouncements());
+                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp)); renderAnnouncements();
             } catch(e) {}
         }
 
@@ -510,12 +503,7 @@
 
             await CryptoService.initKey(pwd); currentUser = IdentityEngine.generate();
             authOverlay.style.display = 'none'; 
-            
-            const chatContainer = document.getElementById('chat-container');
-            chatContainer.style.display = 'flex';
-            if (window.visualViewport) {
-                chatContainer.style.height = window.visualViewport.height + 'px';
-            }
+            document.getElementById('chat-container').style.display = 'flex';
 
             document.getElementById('user-info').innerHTML = `<div style="width: 26px; height: 26px; font-size: 15px; background: ${currentUser.avatarColor}; border-radius: 50%; display: flex; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 2px 6px rgba(0,0,0,0.1); text-shadow:none;">${currentUser.avatarEmoji}</div> ${currentUser.name}`;
 
