@@ -124,11 +124,9 @@
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
-        #chat-container { display: none; width: 100%; max-width: 800px; height: 92vh; max-height: 950px; flex-direction: column; position: relative; border-radius: 36px; overflow: hidden; margin: 0 auto; box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6);}
-        
-        /* 手机端完美贴合屏幕修复 (解除高度封印) */
-        @media (max-width: 780px) { 
-            #chat-container { height: 100vh; height: 100dvh; width: 100vw; max-width: 100%; max-height: 100dvh; border-radius: 0; border: none; margin: 0; box-shadow: none;} 
+        #chat-container { display: none; width: 100%; max-width: 800px; height: 100dvh; flex-direction: column; position: relative; border-radius: 0; overflow: hidden; margin: 0 auto; box-shadow: none;}
+        @media (min-width: 781px) { 
+            #chat-container { height: 92vh; max-height: 950px; border-radius: 36px; box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6); } 
         }
         
         #header { padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.4); padding-top: max(16px, env(safe-area-inset-top)); background: rgba(255,255,255,0.15); z-index: 10;}
@@ -141,11 +139,24 @@
             box-shadow: inset 1px 1px 3px rgba(255,255,255,0.9), 0 4px 10px rgba(0,0,0,0.04); transform: translate3d(0,0,0);
         }
         
-        #announcement-bar { display: none; flex-direction: column; gap: 8px; padding: 12px 22px; border-bottom: 1px solid rgba(255,255,255,0.3); background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); max-height: 25vh; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 9; box-shadow: 0 4px 15px rgba(0,0,0,0.02);}
-        .announce-item { font-size: 13px; color: var(--text-main); opacity: 0.95; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.5; }
-        .announce-badge { font-weight: bold; margin-right: 6px; color: #D96000; flex-shrink: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);}
-        .announce-content { flex: 1; word-break: break-all; display: flex; flex-direction: column; }
-        .announce-img { max-width: 100%; border-radius: 12px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 4px 12px rgba(0,0,0,0.08); cursor: zoom-in;}
+        /* --- 极致 3D 黑金玻璃公告栏美学 --- */
+        #announcement-bar { 
+            display: none; flex-direction: column; gap: 10px; padding: 16px 24px; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4); 
+            background: linear-gradient(135deg, rgba(30, 25, 20, 0.85) 0%, rgba(50, 40, 30, 0.65) 100%); 
+            backdrop-filter: blur(25px) saturate(140%); -webkit-backdrop-filter: blur(25px) saturate(140%);
+            max-height: 28vh; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 9; 
+            box-shadow: inset 0 2px 6px rgba(255, 215, 0, 0.25), 0 8px 25px rgba(0, 0, 0, 0.25);
+            border-top: 1px solid rgba(255, 215, 0, 0.4);
+            border-left: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .announce-item { 
+            font-size: 14px; color: #FFECA1; opacity: 0.98; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.6; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .announce-badge { font-weight: bold; margin-right: 8px; color: #FFB703; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));}
+        .announce-content { flex: 1; word-break: break-all; display: flex; flex-direction: column; color: #FFF8DC; }
+        .announce-img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid rgba(255, 215, 0, 0.5); box-shadow: 0 6px 16px rgba(0,0,0,0.4); cursor: zoom-in;}
 
         #messages { flex: 1; padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; transform: translate3d(0,0,0); }
         
@@ -234,7 +245,7 @@
         #msg-input { 
             flex: 1; min-height: 48px; max-height: 120px; border-radius: 24px; padding: 13px 20px; 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.15) 100%);
-            border: 1px solid rgba(255,255,255,0.6); border-bottom-color: rgba(255,255,255,0.2); border-right-color: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,6,6,0.6); border-bottom-color: rgba(255,255,255,0.2); border-right-color: rgba(255,255,255,0.2);
             box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.8), 0 2px 5px rgba(0,0,0,0.02);
             color: var(--text-main); font-size: 16px; line-height: 22px; outline: none; resize: none;
             text-align: left; transform: translate3d(0,0,0); transition: background 0.2s, border-color 0.2s;
@@ -282,7 +293,6 @@
         <textarea id="fullscreen-textarea" placeholder="在这里尽情挥洒你的长篇大论..."></textarea>
     </div>
 
-    <!-- 管理员专属通道 -->
     <div id="admin-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('admin-overlay').style.display='none'">×</div>
@@ -296,7 +306,6 @@
         </div>
     </div>
 
-    <!-- 焚毁密码弹窗 -->
     <div id="burn-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('burn-overlay').style.display='none'">×</div>
@@ -327,7 +336,6 @@
                 <div class="glass-btn icon-btn" id="open-emoji-btn" title="表情包">😊</div>
                 <div class="glass-btn icon-btn" id="send-img-btn" title="发送图片">📷</div>
                 <div class="glass-btn icon-btn" id="announce-btn" title="发布公告">📢</div>
-                <!-- 全屏按钮被移到这里，腾出宝贵的输入框横向空间 -->
                 <div class="glass-btn icon-btn" id="fullscreen-btn" title="全屏输入">⛶</div>
                 <div class="glass-btn icon-btn" id="burn-btn" title="焚毁清屏" style="color: #D96000;">🔥</div>
             </div>
@@ -336,7 +344,6 @@
 
             <div id="input-area">
                 <div class="glass-btn icon-btn" id="toggle-menu-btn" style="font-size: 24px; font-weight: 300;">+</div>
-                <!-- 彻底释放宽度的输入框 -->
                 <textarea id="msg-input" maxlength="3000" placeholder="发送奇思妙想..." rows="1"></textarea>
                 <div class="glass-btn" id="send-btn">发送</div>
                 <input type="file" id="file-input" accept="image/*">
@@ -367,7 +374,7 @@
         document.getElementById('install-btn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; } deferredPrompt = null; } });
         window.addEventListener('appinstalled', () => { alert("🎉 应用已成功安装！"); document.getElementById('install-btn').style.display = 'none'; });
 
-        const SYSTEM_PEPPER = "SunChat_E2EE_V27_SuperSecure_Pepper_@2026!"; 
+        const SYSTEM_PEPPER = "SunChat_E2EE_V28_SuperSecure_Pepper_@2026!"; 
         const LIFESPAN_MS = (12 * 60 * 60 * 1000) + (1 * 60 * 1000); 
         
         let roomID = new URLSearchParams(window.location.search).get('room');
@@ -397,6 +404,16 @@
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         
         msgInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
+
+        // --- 核心优化：智能虚拟键盘遮挡对策与尺寸自适应 ---
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                const container = document.getElementById('chat-container');
+                // 当键盘弹出时，视口高度变小，强制将聊天容器高度拉伸匹配键盘上方的真实高度
+                container.style.height = window.visualViewport.height + 'px';
+                window.scrollTo(0, 0);
+            });
+        }
 
         toggleMenuBtn.addEventListener('click', () => {
             actionMenu.classList.toggle('active');
