@@ -35,16 +35,16 @@
             transform: translate3d(0,0,0); will-change: transform;
         }
 
-        /* 核心修复：弹窗层在手机键盘弹出时使用 absolute 顶部定位并允许滚动，确保任何弹窗输入框绝不被键盘遮挡 */
+        /* 核心修复：所有弹出层完美恢复 fixed 居中，并允许在键盘弹起时纵向滚动，防止内容被吃掉 */
         .overlay { 
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; 
-            display: flex; justify-content: flex-start; align-items: center; flex-direction: column;
-            z-index: 9999; padding: 20px 20px 40px 20px; box-sizing: border-box; background: rgba(0,0,0,0.25);
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; 
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            z-index: 9999; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.25);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
 
-        #lightbox-overlay { justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10001; cursor: zoom-out; }
+        #lightbox-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10001; cursor: zoom-out; }
         #lightbox-img { max-width: 95%; max-height: 90%; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         #lightbox-overlay.active #lightbox-img { transform: scale(1); }
 
@@ -52,7 +52,7 @@
             border-radius: 36px; padding: 35px 30px; width: 100%; max-width: 360px; 
             animation: scaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             display: flex; flex-direction: column; align-items: center; position: relative;
-            margin-top: auto; margin-bottom: auto; /* 让弹窗在键盘弹出时能自动往上顶 */
+            max-height: 85vh; overflow-y: auto; /* 保证键盘弹起时卡片本身可以内部滚动，输入框永不超出视线 */
         }
 
         .text-black-gold {
@@ -399,23 +399,27 @@
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         msgInput.addEventListener('input', function() { this.style.height = '44px'; this.style.height = Math.min(this.scrollHeight, 110) + 'px'; });
 
-        // --- 核心修复：苹果手机视觉视窗锁定与焦点防滚动抖动 ---
+        // --- 核心修复：苹果手机视觉视窗动态缩放与键盘顶起处理 ---
         if (window.visualViewport) {
             const handleResize = () => {
+                const height = window.visualViewport.height;
+                document.body.style.height = height + 'px';
+                document.querySelectorAll('.overlay').forEach(el => {
+                    el.style.height = height + 'px';
+                });
                 const chatContainer = document.getElementById('chat-container');
                 if (chatContainer.style.display !== 'none') {
-                    chatContainer.style.height = window.visualViewport.height + 'px';
+                    chatContainer.style.height = height + 'px';
                 }
             };
             window.visualViewport.addEventListener('resize', handleResize);
             window.visualViewport.addEventListener('scroll', handleResize);
         }
 
-        // 绑定所有输入框在获得焦点时，自动将页面滚动条重置并平滑滚动到可见区域，防止软键盘遮挡
+        // 当任意输入框聚焦时，利用 scrollIntoView 确保该输入框自动滚动到键盘正上方可见区域
         document.addEventListener('focusin', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 setTimeout(() => {
-                    window.scrollTo(0, 0);
                     e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
             }
@@ -470,7 +474,7 @@
             try {
                 const data = await StorageService.load(); const now = Date.now();
                 localMessages = (data.msgs || []).filter(m => now - m.timestamp < LIFESPAN_MS); announcements = (data.ann || []).filter(a => now - a.timestamp < LIFESPAN_MS);
-                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp)); renderAnnouncements();
+                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp)); announcements.forEach(a => renderAnnouncements());
             } catch(e) {}
         }
 
