@@ -18,7 +18,6 @@
             position: relative;
             -webkit-font-smoothing: antialiased; 
             overscroll-behavior-y: none;
-            /* 修正：移除 body 的强制上下边距，改为纯居中，防止把内容往上挤进手机时间栏 */
             padding: 0;
         }
 
@@ -106,21 +105,21 @@
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
-        /* 聊天主容器：确保高度铺满 100dvh，且利用 padding-top 完美避开微信/浏览器的系统时间栏和灵动岛 */
+        /* 聊天主容器：强制缩减高度，并在顶部增加明显的安全向下偏移量，彻底告别贴顶与被微信状态栏遮挡 */
         #chat-container { 
             display: none; 
             width: 100%; 
             max-width: 800px; 
-            height: 100dvh; 
-            max-height: 100dvh; 
+            height: calc(100dvh - 36px); 
+            max-height: calc(100dvh - 36px); 
             flex-direction: column; 
             position: relative; 
-            border-radius: 0; 
+            border-radius: 28px; 
             overflow: hidden; 
-            margin: 0 auto; 
-            box-shadow: none;
-            /* 核心修复：顶部强制加上安全距离，防止跑进手机时间栏 */
-            padding-top: env(safe-area-inset-top, 24px);
+            margin: auto; 
+            box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6);
+            /* 核心调整：顶部整体下移，预留充足的安全距离 */
+            margin-top: 24px;
         }
         @media (min-width: 781px) { 
             #chat-container { 
@@ -128,7 +127,7 @@
                 max-height: 950px; 
                 border-radius: 36px; 
                 box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6); 
-                padding-top: 0;
+                margin-top: 0;
             } 
         }
 
