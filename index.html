@@ -1,6 +1,7 @@
 <!DOCTYPE html><html lang="zh-CN"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">    <link rel="manifest" id="dynamic-manifest">    <meta name="apple-mobile-web-app-capable" content="yes">    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <meta name="apple-mobile-web-app-title" content="有点儿意思">    <meta name="theme-color" content="#FFB703">    <title>🌞 有点儿意思</title>    <link rel="apple-touch-icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">    <link rel="icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">        <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>    <link rel="preconnect" href="https://broker.emqx.io" crossorigin>    <script src="https://fastly.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>        <style>        :root {            --text-main: #5C3A21;            --sun-gold-light: #FFDA77;            --sun-gold-mid: #FFB703;            --sun-gold-dark: #FB8500;        }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
         
+        /* 核心修复：针对苹果手机，使用固定定位和 100dvh 锁死视窗，防止键盘弹起时页面整体上下漂移或下沉 */
         html, body { 
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
             background-color: var(--sun-gold-mid);
@@ -20,7 +21,7 @@
             align-items: center; 
             -webkit-font-smoothing: antialiased; 
             overscroll-behavior-y: none;
-            padding: env(safe-area-inset-top, 12px) 10px env(safe-area-inset-bottom, 12px) 10px;
+            padding: env(safe-area-inset-top, 10px) 10px env(safe-area-inset-bottom, 10px) 10px;
         }
 
         .bg-blob-1 { position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(255, 245, 200, 0.6); border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; transform: translate3d(0,0,0); }
@@ -47,9 +48,10 @@
         #lightbox-overlay.active #lightbox-img { transform: scale(1); }
 
         .auth-card { 
-            border-radius: 36px; padding: 45px 35px; width: 100%; max-width: 360px; 
+            border-radius: 36px; padding: 40px 30px; width: 100%; max-width: 360px; 
             animation: scaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             display: flex; flex-direction: column; align-items: center; position: relative;
+            max-height: 85vh; overflow-y: auto; /* 防止在苹果手机键盘弹起时登录框被挤压截断 */
         }
 
         .text-black-gold {
@@ -68,21 +70,21 @@
         .logo-3d-mini { display: flex; align-items: center; gap: 6px; font-size: 20px;}
         .cute-sun { width: 34px; height: 34px; filter: drop-shadow(0 4px 6px rgba(180, 80, 0, 0.3)); }
         .cute-sun-mini { width: 24px; height: 24px; filter: drop-shadow(0 2px 4px rgba(180, 80, 0, 0.3)); }
-        .auth-card p { margin: 0 0 35px 0; font-size: 14px; color: rgba(92, 58, 33, 0.8); letter-spacing: 2px; text-align: center; font-weight: 500;}
+        .auth-card p { margin: 0 0 25px 0; font-size: 14px; color: rgba(92, 58, 33, 0.8); letter-spacing: 2px; text-align: center; font-weight: 500;}
 
         .glass-input {
-            width: 100%; padding: 16px 22px; border-radius: 22px; 
+            width: 100%; padding: 14px 20px; border-radius: 20px; 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
             border: 1px solid rgba(255, 255, 255, 0.5); border-bottom-color: rgba(255, 255, 255, 0.2); border-right-color: rgba(255, 255, 255, 0.2);
             box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.06), inset -2px -2px 6px rgba(255, 255, 255, 0.8), 0 2px 5px rgba(0, 0, 0, 0.02);
-            color: var(--text-main); font-size: 16px; font-weight: 500; text-align: center; outline: none; margin-bottom: 24px; 
+            color: var(--text-main); font-size: 16px; font-weight: 500; text-align: center; outline: none; margin-bottom: 20px; 
             transform: translate3d(0,0,0); transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .glass-input::placeholder { color: rgba(92, 58, 33, 0.45); }
         .glass-input:focus { background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%); box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.04), inset -2px -2px 6px rgba(255, 255, 255, 0.9), 0 4px 15px rgba(255, 255, 255, 0.3); border-color: rgba(255,255,255,0.9); }
 
         .glass-btn {
-            width: 100%; height: 54px; border-radius: 22px; 
+            width: 100%; height: 50px; border-radius: 20px; 
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.25) 100%);
             border-top: 1px solid rgba(255, 255, 255, 1); border-left: 1px solid rgba(255, 255, 255, 0.8);
             border-right: 1px solid rgba(255, 255, 255, 0.3); border-bottom: 1px solid rgba(255, 255, 255, 0.3);
@@ -97,14 +99,14 @@
             border-top-color: rgba(255,255,255,0.4); border-left-color: rgba(255,255,255,0.4);
         }
 
-        #install-btn { display: none; margin-top: 25px; color: #D96000; font-size: 14px; height: 46px; border-radius: 23px; }
+        #install-btn { display: none; margin-top: 20px; color: #D96000; font-size: 14px; height: 44px; border-radius: 22px; }
         .btn-group { display: flex; gap: 12px; width: 100%; }
         .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
         .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.7) 0%, rgba(255, 90, 0, 0.3) 100%); border-top-color: rgba(255,200,100,0.9); color: #fff; }
 
         #admin-overlay, #burn-overlay, #del-announce-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .auth-card-modal { max-width: 420px; padding: 40px 30px; }
-        .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
+        .auth-card-modal { max-width: 420px; padding: 35px 25px; }
+        .close-btn { position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; border-radius: 15px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
         #chat-container { 
@@ -138,11 +140,11 @@
         }
 
         #announcement-bar { 
-            display: none; flex-direction: column; gap: 10px; padding: 16px 24px; 
+            display: none; flex-direction: column; gap: 10px; padding: 14px 20px; 
             border-bottom: 1px solid rgba(255, 255, 255, 0.4); 
             background: linear-gradient(135deg, rgba(30, 25, 20, 0.85) 0%, rgba(50, 40, 30, 0.65) 100%); 
             backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
-            max-height: 28vh; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 9; 
+            max-height: 25vh; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 9; 
             box-shadow: inset 0 2px 6px rgba(255, 215, 0, 0.25), 0 8px 25px rgba(0, 0, 0, 0.25);
             border-top: 1px solid rgba(255, 215, 0, 0.4);
             border-left: 1px solid rgba(255, 215, 0, 0.3);
@@ -396,19 +398,25 @@
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         msgInput.addEventListener('input', function() { this.style.height = '44px'; this.style.height = Math.min(this.scrollHeight, 110) + 'px'; });
 
-        // --- 核心修复：针对苹果手机打字下沉问题的绝对防止位移锁定 ---
+        // --- 核心修复：彻底禁绝苹果手机键盘弹起时页面的整体下沉与错位 ---
         if (window.visualViewport) {
-            const handleViewportChange = () => {
-                const chatContainer = document.getElementById('chat-container');
-                if (chatContainer.style.display !== 'none') {
-                    // 仅锁定高度匹配视口，禁止 body 发生任何滚动下沉
-                    chatContainer.style.height = window.visualViewport.height + 'px';
-                    window.scrollTo(0, 0);
-                }
+            const preventScrollOnKeyboard = () => {
+                window.scrollTo(0, 0);
             };
-            window.visualViewport.addEventListener('resize', handleViewportChange);
-            window.visualViewport.addEventListener('scroll', handleViewportChange);
+            window.visualViewport.addEventListener('resize', preventScrollOnKeyboard);
+            window.visualViewport.addEventListener('scroll', preventScrollOnKeyboard);
         }
+
+        // 针对输入框获得焦点时强制页面滚动归零，解决苹果 Safari 键盘把整个网页往上顶、顶部被吃掉的问题
+        const allInputs = document.querySelectorAll('input, textarea');
+        allInputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    document.body.scrollTop = 0;
+                }, 50);
+            });
+        });
 
         toggleMenuBtn.addEventListener('click', () => {
             actionMenu.classList.toggle('active');
@@ -495,12 +503,7 @@
 
             await CryptoService.initKey(pwd); currentUser = IdentityEngine.generate();
             authOverlay.style.display = 'none'; 
-            
-            const chatContainer = document.getElementById('chat-container');
-            chatContainer.style.display = 'flex';
-            if (window.visualViewport) {
-                chatContainer.style.height = window.visualViewport.height + 'px';
-            }
+            document.getElementById('chat-container').style.display = 'flex';
 
             document.getElementById('user-info').innerHTML = `<div style="width: 26px; height: 26px; font-size: 15px; background: ${currentUser.avatarColor}; border-radius: 50%; display: flex; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 2px 6px rgba(0,0,0,0.1); text-shadow:none;">${currentUser.avatarEmoji}</div> ${currentUser.name}`;
 
@@ -527,7 +530,6 @@
             isUploadingAnnounceImg = true; document.getElementById('file-input').click();
         });
 
-        // --- 新增：删除单个置顶公告功能 ---
         let targetAnnounceIndexToDelete = null;
         function promptDeleteAnnouncement(index) {
             targetAnnounceIndexToDelete = index;
@@ -554,7 +556,6 @@
                 await syncToStorage();
                 renderAnnouncements();
 
-                // 同步广播删除后的公告列表
                 const ts = Date.now();
                 const internalPayload = JSON.stringify({ type: 'announce_list', content: announcements, timestamp: ts });
                 const encryptedPayload = await CryptoService.encrypt(internalPayload);
