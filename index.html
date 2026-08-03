@@ -3,403 +3,687 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 启用现代移动端 100dvh 防遮挡，禁止缩放 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" id="dynamic-manifest">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <!-- 网页标签上的太阳图标 -->
-    <link rel="icon" href="https://api.iconify.design/meteocons:clear-day-fill.svg" type="image/svg+xml">
-    <title>黑金视界</title>
+    <meta name="apple-mobile-web-app-title" content="有点儿意思">
+    <meta name="theme-color" content="#FFB703">
+    <title>🌞 有点儿意思</title>
+    <!-- 完美苹果桌面高清可爱太阳图标 -->
+    <link rel="apple-touch-icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">
+    <link rel="icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">
+    
+    <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://broker.emqx.io" crossorigin>
+    <script src="https://fastly.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
     
     <style>
-        /* CSS Reset & 基础黑金设定 */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html {
-            /* 使用 dvh 完美解决 iOS 底部控制栏和键盘遮挡问题 */
-            height: 100dvh; 
-            width: 100%;
-            background-color: #050505;
-            color: #E0E0E0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+        :root {
+            --text-main: #5C3A21;
+            --sun-gold-light: #FFDA77;
+            --sun-gold-mid: #FFB703;
+            --sun-gold-dark: #FB8500;
         }
 
-        /* 顶部导航 - 黑金玻璃拟态 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            padding-top: env(safe-area-inset-top, 15px); /* 适配刘海屏 */
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-            z-index: 10;
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
+            background-color: var(--sun-gold-mid);
+            background-image: 
+                radial-gradient(circle at 20% 0%, #FFEBAA 0%, transparent 45%),
+                radial-gradient(circle at 80% 100%, var(--sun-gold-dark) 0%, transparent 55%),
+                linear-gradient(135deg, var(--sun-gold-light) 0%, var(--sun-gold-mid) 50%, var(--sun-gold-dark) 100%);
+            color: var(--text-main); display: flex; justify-content: center; align-items: center; 
+            height: 100vh; height: 100dvh; overflow: hidden; position: relative;
+            -webkit-font-smoothing: antialiased; overscroll-behavior-y: none;
+        }
+
+        .bg-blob-1 { position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(255, 245, 200, 0.6); border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; transform: translate3d(0,0,0); }
+        .bg-blob-2 { position: absolute; bottom: -10%; right: -10%; width: 45vw; height: 45vw; background: rgba(251, 133, 0, 0.5); border-radius: 50%; filter: blur(90px); z-index: -1; pointer-events: none; transform: translate3d(0,0,0); }
+
+        .glass-3d {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
+            backdrop-filter: blur(30px) saturate(130%); -webkit-backdrop-filter: blur(30px) saturate(130%);
+            border-top: 1px solid rgba(255, 255, 255, 0.9); border-left: 1px solid rgba(255, 255, 255, 0.6);
+            border-right: 1px solid rgba(255, 255, 255, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 35px rgba(160, 70, 0, 0.15), inset 1px 1px 2px rgba(255, 255, 255, 0.8);
+            transform: translate3d(0,0,0); will-change: transform;
+        }
+
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; 
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            z-index: 9999; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.15);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         }
         
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #FFD700;
-            font-weight: bold;
-            font-size: 1.1rem;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        #lightbox-overlay { display: none; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 10001; cursor: zoom-out; }
+        #lightbox-img { max-width: 95%; max-height: 90%; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        #lightbox-overlay.active #lightbox-img { transform: scale(1); }
+
+        .auth-card { 
+            border-radius: 36px; padding: 45px 35px; width: 100%; max-width: 360px; 
+            animation: scaleIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; flex-direction: column; align-items: center; position: relative;
         }
 
-        /* 太阳图标 */
-        .sun-icon {
-            width: 24px;
-            height: 24px;
-            fill: #FFD700;
+        .text-black-gold {
+            color: #1a1a1a; 
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 
+                0px -1px 1px rgba(255, 255, 255, 0.5),   
+                0px 1px 0px #FFDF73,                     
+                0px 2px 0px #FB8500,                     
+                0px 3px 2px rgba(180, 70, 0, 0.8),       
+                0px 6px 15px rgba(0, 0, 0, 0.5);         
         }
-
-        .header-controls { display: flex; gap: 10px; }
+        .logo-3d { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 10px 0; font-size: 28px;}
+        .logo-3d-mini { display: flex; align-items: center; gap: 6px; font-size: 20px;}
         
-        .btn {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #FFD700;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            transition: all 0.3s;
-        }
-        .btn:active { background: rgba(255, 215, 0, 0.3); }
+        .cute-sun { width: 34px; height: 34px; filter: drop-shadow(0 4px 6px rgba(180, 80, 0, 0.3)); }
+        .cute-sun-mini { width: 24px; height: 24px; filter: drop-shadow(0 2px 4px rgba(180, 80, 0, 0.3)); }
 
-        /* 倒计时面板 */
-        .timer-bar {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #FF6B6B;
-            padding: 5px;
-            background: rgba(0,0,0,0.8);
-            border-bottom: 1px solid rgba(255, 107, 107, 0.2);
+        .auth-card p { margin: 0 0 35px 0; font-size: 14px; color: rgba(92, 58, 33, 0.8); letter-spacing: 2px; text-align: center; font-weight: 500;}
+        
+        .glass-input {
+            width: 100%; padding: 16px 22px; border-radius: 22px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.5); border-bottom-color: rgba(255, 255, 255, 0.2); border-right-color: rgba(255, 255, 255, 0.2);
+            box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.06), inset -2px -2px 6px rgba(255, 255, 255, 0.8), 0 2px 5px rgba(0, 0, 0, 0.02);
+            color: var(--text-main); font-size: 16px; font-weight: 500; text-align: center; outline: none; margin-bottom: 24px; 
+            transform: translate3d(0,0,0); transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-
-        /* 聊天区域 */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            -webkit-overflow-scrolling: touch;
+        .glass-input::placeholder { color: rgba(92, 58, 33, 0.45); }
+        .glass-input:focus { background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%); box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.04), inset -2px -2px 6px rgba(255, 255, 255, 0.9), 0 4px 15px rgba(255, 255, 255, 0.3); border-color: rgba(255,255,255,0.9); }
+        
+        .glass-btn {
+            width: 100%; height: 54px; border-radius: 22px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.25) 100%);
+            border-top: 1px solid rgba(255, 255, 255, 1); border-left: 1px solid rgba(255, 255, 255, 0.8);
+            border-right: 1px solid rgba(255, 255, 255, 0.3); border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 1), inset -2px -2px 6px rgba(0, 0, 0, 0.05), 0 8px 20px rgba(180, 80, 0, 0.12);
+            color: var(--text-main); font-size: 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px;
+            transform: translate3d(0,0,0); transition: all 0.15s ease-out; 
+        }
+        .glass-btn:active { 
+            transform: translateY(3px) scale(0.97) translate3d(0,0,0); 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.5) 100%);
+            box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.08), inset -3px -3px 8px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.02);
+            border-top-color: rgba(255,255,255,0.4); border-left-color: rgba(255,255,255,0.4);
         }
 
-        .message {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            word-wrap: break-word;
+        #install-btn { display: none; margin-top: 25px; color: #D96000; font-size: 14px; height: 46px; border-radius: 23px; }
+        .btn-group { display: flex; gap: 12px; width: 100%; }
+        .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
+        .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.7) 0%, rgba(255, 90, 0, 0.3) 100%); border-top-color: rgba(255,200,100,0.9); color: #fff; }
+
+        #admin-overlay, #burn-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .auth-card-modal { max-width: 420px; padding: 40px 30px; }
+        .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
+        .close-btn:active { background: rgba(255,255,255,0.5); }
+
+        #chat-container { display: none; width: 100%; max-width: 800px; height: 100dvh; flex-direction: column; position: relative; border-radius: 0; overflow: hidden; margin: 0 auto; box-shadow: none;}
+        @media (min-width: 781px) { 
+            #chat-container { height: 92vh; max-height: 950px; border-radius: 36px; box-shadow: 0 20px 60px rgba(160, 70, 0, 0.2), inset 1px 1px 2px rgba(255,255,255,0.6); } 
         }
         
-        /* 玻璃拟态气泡 */
-        .msg-sys {
-            align-self: center;
-            background: rgba(255, 255, 255, 0.05);
-            color: #888;
-            font-size: 0.8rem;
-            border-radius: 20px;
-            padding: 5px 15px;
-        }
-        .msg-mine {
-            align-self: flex-end;
-            background: rgba(255, 215, 0, 0.15);
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #FFF;
-            border-bottom-right-radius: 2px;
-        }
-        .msg-other {
-            align-self: flex-start;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #E0E0E0;
-            border-bottom-left-radius: 2px;
-        }
-
-        /* 输入区域 - 防遮挡重点 */
-        .input-area {
-            padding: 10px 15px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-            background: rgba(10, 10, 10, 0.8);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(255, 215, 0, 0.15);
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .chat-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            color: #FFF;
-            padding: 12px 15px;
-            border-radius: 20px;
-            font-size: 1rem;
-            outline: none;
-            max-height: 100px;
-            resize: none;
-        }
-        .chat-input::placeholder { color: #666; }
+        #header { padding: 16px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.4); padding-top: max(16px, env(safe-area-inset-top)); background: rgba(255,255,255,0.15); z-index: 10;}
         
-        .send-btn {
-            background: linear-gradient(135deg, #FFD700, #DAA520);
-            color: #000;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-weight: bold;
-            flex-shrink: 0;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        .header-user-badge { 
+            display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.2) 100%); 
+            padding: 5px 16px 5px 5px; border-radius: 24px; 
+            border-top: 1px solid rgba(255,255,255,0.8); border-left: 1px solid rgba(255,255,255,0.5);
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,0.9), 0 4px 10px rgba(0,0,0,0.04); transform: translate3d(0,0,0);
         }
+        
+        /* --- 极致 3D 黑金玻璃公告栏美学 --- */
+        #announcement-bar { 
+            display: none; flex-direction: column; gap: 10px; padding: 16px 24px; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4); 
+            background: linear-gradient(135deg, rgba(30, 25, 20, 0.85) 0%, rgba(50, 40, 30, 0.65) 100%); 
+            backdrop-filter: blur(25px) saturate(140%); -webkit-backdrop-filter: blur(25px) saturate(140%);
+            max-height: 28vh; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 9; 
+            box-shadow: inset 0 2px 6px rgba(255, 215, 0, 0.25), 0 8px 25px rgba(0, 0, 0, 0.25);
+            border-top: 1px solid rgba(255, 215, 0, 0.4);
+            border-left: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        .announce-item { 
+            font-size: 14px; color: #FFECA1; opacity: 0.98; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.6; 
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .announce-badge { font-weight: bold; margin-right: 8px; color: #FFB703; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));}
+        .announce-content { flex: 1; word-break: break-all; display: flex; flex-direction: column; color: #FFF8DC; }
+        .announce-img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid rgba(255, 215, 0, 0.5); box-shadow: 0 6px 16px rgba(0,0,0,0.4); cursor: zoom-in;}
 
-        /* 遮罩层 (用于无频道时提示输入) */
-        #room-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+        #messages { flex: 1; padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; transform: translate3d(0,0,0); }
+        
+        .msg-row { display: flex; width: 100%; gap: 12px; align-items: flex-end; transform: translate3d(0,0,0); will-change: transform;}
+        .msg-row-self { flex-direction: row-reverse; }
+        
+        .msg-avatar { 
+            width: 44px; height: 44px; border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 24px; flex-shrink: 0; 
+            border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6);
+            box-shadow: inset 2px 2px 5px rgba(255,255,255,0.8), inset -2px -2px 6px rgba(0,0,0,0.1), 0 6px 15px rgba(180, 80, 0, 0.15); 
+            z-index: 2; transform: rotate(-3deg);
         }
-        .modal-box {
-            background: rgba(20, 20, 20, 0.9);
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            padding: 30px;
-            border-radius: 16px;
-            text-align: center;
-            width: 80%;
-            max-width: 320px;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+        
+        .msg-body { max-width: calc(100% - 60px); display: flex; flex-direction: column; }
+        .msg-body-self { align-items: flex-end; }
+        .msg-body-other { align-items: flex-start; }
+        
+        .msg-sender { font-size: 0.75em; opacity: 0.75; margin-bottom: 6px; font-weight: 600; padding: 0 6px;}
+        .msg-content-row { display: flex; align-items: flex-end; gap: 8px; }
+        .countdown-timer { font-size: 11px; opacity: 0.5; font-family: -apple-system-monospaced, monospace; white-space: nowrap; font-weight: 600; flex-shrink: 0; margin-bottom: 4px; }
+
+        .message { padding: 12px 18px; border-radius: 22px; word-break: break-all; font-size: 15px; line-height: 1.5; position: relative; transform: translate3d(0,0,0); }
+        
+        .msg-sys { 
+            text-align: center; font-size: 0.85em; align-self: center; border-radius: 16px; padding: 6px 18px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.35) 100%); 
+            border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6);
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,0.9), inset -1px -1px 3px rgba(0,0,0,0.03), 0 4px 15px rgba(0,0,0,0.05); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+            color: rgba(92, 58, 33, 0.9); width: fit-content; margin: 0 auto; font-weight: 500;
         }
-        .modal-input {
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid #FFD700;
-            color: #FFF;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 1.1rem;
-            outline: none;
+        
+        .msg-self { 
+            background: linear-gradient(135deg, rgba(255, 250, 240, 0.95) 0%, rgba(255, 240, 220, 0.75) 100%); border-bottom-right-radius: 6px; 
+            border-top: 1px solid rgba(255,255,255,1); border-left: 1px solid rgba(255,255,255,0.8);
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,1), inset -2px -2px 4px rgba(200, 100, 0, 0.05), 0 6px 15px rgba(180, 80, 0, 0.08); 
         }
+        
+        .msg-other { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.4) 100%); border-bottom-left-radius: 6px; 
+            border-top: 1px solid rgba(255,255,255,0.95); border-left: 1px solid rgba(255,255,255,0.7);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
+            box-shadow: inset 1px 1px 3px rgba(255,255,255,1), inset -2px -2px 4px rgba(0,0,0,0.03), 0 6px 15px rgba(180, 80, 0, 0.06); 
+        }
+        
+        .msg-sticker { background: transparent !important; border: none !important; box-shadow: none !important; font-size: 60px; padding: 0; line-height: 1; filter: drop-shadow(0 6px 12px rgba(180, 80, 0, 0.2)); }
+        .msg-img { max-width: 100%; border-radius: 14px; margin-top: 6px; display: block; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: zoom-in; }
+
+        #bottom-wrapper { position: relative; z-index: 101; }
+        
+        #action-menu {
+            position: absolute; bottom: 85px; left: 22px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.5) 100%); 
+            backdrop-filter: blur(20px) saturate(120%); -webkit-backdrop-filter: blur(20px) saturate(120%);
+            border-top: 1px solid rgba(255, 255, 255, 1); border-left: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 26px; padding: 12px; display: flex; gap: 12px;
+            box-shadow: 0 10px 30px rgba(180, 80, 0, 0.15), inset 2px 2px 6px rgba(255,255,255,0.9);
+            transform-origin: bottom left; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0; transform: scale(0.5) translate3d(0, 20px, 0); pointer-events: none;
+        }
+        #action-menu.active { opacity: 1; transform: scale(1) translate3d(0, 0, 0); pointer-events: auto; }
+
+        #emoji-panel {
+            display: none; position: absolute; bottom: 160px; left: 22px; right: 22px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.4) 100%); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255, 255, 255, 1); border-left: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 28px; padding: 20px; 
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 12px; 
+            max-height: 220px; overflow-y: auto; z-index: 100; 
+            box-shadow: 0 15px 45px rgba(180, 80, 0, 0.15), inset 2px 2px 8px rgba(255,255,255,0.9);
+            transform: translate3d(0,0,0);
+        }
+        .emoji-item { font-size: 32px; text-align: center; cursor: pointer; transition: transform 0.15s; user-select: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .emoji-item:active { transform: scale(1.4); }
+
+        #input-area { 
+            display: flex; gap: 10px; padding: 15px 22px; 
+            border-top: 1px solid rgba(255,255,255,0.5); padding-bottom: max(15px, env(safe-area-inset-bottom)); 
+            align-items: flex-end; background: rgba(255,255,255,0.25); 
+            box-shadow: 0 -4px 20px rgba(180,80,0,0.05); position: relative;
+        }
+        
+        .icon-btn { width: 48px; height: 48px; padding: 0; border-radius: 24px; font-size: 22px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+
+        #msg-input { 
+            flex: 1; min-height: 48px; max-height: 120px; border-radius: 24px; padding: 13px 20px; 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.15) 100%);
+            border: 1px solid rgba(255,6,6,0.6); border-bottom-color: rgba(255,255,255,0.2); border-right-color: rgba(255,255,255,0.2);
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.05), inset -3px -3px 6px rgba(255,255,255,0.8), 0 2px 5px rgba(0,0,0,0.02);
+            color: var(--text-main); font-size: 16px; line-height: 22px; outline: none; resize: none;
+            text-align: left; transform: translate3d(0,0,0); transition: background 0.2s, border-color 0.2s;
+            overflow-y: auto; margin: 0;
+        }
+        #msg-input:focus { background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%); border-color: #fff; }
+        
+        #send-btn { width: auto; height: 48px; padding: 0 20px; border-radius: 24px; font-size: 16px; flex-shrink: 0;}
+
+        #fullscreen-input-overlay { display: none; background: rgba(255,183,3,0.95); backdrop-filter: blur(25px); z-index: 10000; flex-direction: column; padding: max(30px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); }
+        #fullscreen-textarea { flex: 1; width: 100%; border-radius: 28px; padding: 25px; font-size: 18px; line-height: 1.6; resize: none; background: rgba(255,255,255,0.6); border: 1px solid #fff; box-shadow: inset 3px 3px 10px rgba(0,0,0,0.06); color: var(--text-main); outline: none; margin-bottom: 20px; }
+        
+        #file-input { display: none; }
+        @keyframes scaleIn { 0% { opacity: 0; transform: scale(0.92) translateY(15px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
     </style>
 </head>
 <body>
 
-    <!-- 顶部导航 -->
-    <header class="header">
-        <div class="header-title">
-            <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></svg>
-            <span>黑金视界</span>
-        </div>
-        <div class="header-controls">
-            <button class="btn" onclick="handleAnnouncement()">公告</button>
-        </div>
-    </header>
+    <div class="bg-blob-1"></div>
+    <div class="bg-blob-2"></div>
 
-    <!-- 自毁倒计时 -->
-    <div class="timer-bar" id="destruct-timer">通道安全校验中...</div>
-
-    <!-- 聊天区域 -->
-    <div class="chat-container" id="chat-box">
-        <!-- 消息会在这里动态生成 -->
+    <div id="auth-overlay" class="overlay">
+        <div class="auth-card glass-3d">
+            <div class="logo-3d text-black-gold">
+                <img src="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png" class="cute-sun" alt="太阳">
+                有点儿意思
+            </div>
+            <p>🪐 探索无界 · 发现奇趣 🛸</p>
+            <input type="password" id="pwd-input" class="glass-input" placeholder="请输入访问密钥" autocomplete="off">
+            <button id="pwd-btn" class="glass-btn">验证并进入</button>
+            <button id="install-btn" class="glass-btn" style="border-radius: 22px; height: 48px;">⏬ 将此应用安装到桌面</button>
+        </div>
     </div>
 
-    <!-- 底部输入框 (利用 Flex 和 dvh 完美贴合键盘上方) -->
-    <div class="input-area">
-        <input type="text" id="msg-input" class="chat-input" placeholder="输入信息..." autocomplete="off">
-        <button class="send-btn" onclick="sendMessage()">发送</button>
+    <div id="lightbox-overlay" class="overlay" onclick="this.classList.remove('active'); setTimeout(() => this.style.display='none', 300);">
+        <img id="lightbox-img" src="" alt="预览">
     </div>
 
-    <!-- 通行码输入弹窗 -->
-    <div id="room-modal">
-        <div class="modal-box">
-            <h3 style="color: #FFD700; margin-bottom: 10px;">黑金视界验证</h3>
-            <p style="color: #aaa; font-size: 0.9rem;">请输入频道通行码连接</p>
-            <input type="text" id="manual-room-input" class="modal-input" placeholder="输入通行码">
-            <button class="btn" style="width: 100%; margin-top: 20px; padding: 12px;" onclick="joinManualRoom()">进入</button>
+    <div id="fullscreen-input-overlay" class="overlay">
+        <div style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; color: #FFF9E6; text-shadow: 0 1px 2px rgba(180,80,0,0.5); font-size: 18px;">
+            <span onclick="closeFullscreenInput()" style="padding: 10px; cursor: pointer;">取消</span>
+            <span>沉浸编写</span>
+            <span onclick="sendFullscreenText()" style="padding: 10px; cursor: pointer;">发送</span>
+        </div>
+        <textarea id="fullscreen-textarea" placeholder="在这里尽情挥洒你的长篇大论..."></textarea>
+    </div>
+
+    <div id="admin-overlay" class="overlay" style="display: none;">
+        <div class="auth-card glass-3d auth-card-modal">
+            <div class="close-btn" onclick="document.getElementById('admin-overlay').style.display='none'">×</div>
+            <h3 style="margin: 0 0 25px 0; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">管理员专属通道</h3>
+            <textarea id="admin-text-input" class="glass-input" placeholder="输入全频位置顶公告 (支持5000字)" maxlength="5000" style="height: 120px; resize: none; text-align: left; padding: 18px; border-radius: 22px;"></textarea>
+            <input type="password" id="admin-pwd-input" class="glass-input" placeholder="验证管理密码" autocomplete="off" style="margin-bottom: 25px;">
+            <div class="btn-group">
+                <button id="admin-confirm-text-btn" class="glass-btn" style="flex: 1;">📝 发文字</button>
+                <button id="admin-confirm-img-btn" class="glass-btn btn-img-announce" style="flex: 1;">🖼️ 发图片</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="burn-overlay" class="overlay" style="display: none;">
+        <div class="auth-card glass-3d auth-card-modal">
+            <div class="close-btn" onclick="document.getElementById('burn-overlay').style.display='none'">×</div>
+            <h3 style="margin: 0 0 20px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🔥 危险操作</h3>
+            <p style="margin-bottom: 25px; font-size: 14px; text-align: center; color: var(--text-main); opacity: 0.9;">此操作将彻底焚毁本地及云端的所有聊天记录，且不可逆转。</p>
+            <input type="password" id="burn-pwd-input" class="glass-input" placeholder="输入管理员密码" autocomplete="off" style="margin-bottom: 25px;">
+            <div class="btn-group">
+                <button class="glass-btn btn-cancel" style="flex: 1;" onclick="document.getElementById('burn-overlay').style.display='none'">取消</button>
+                <button id="burn-confirm-btn" class="glass-btn" style="flex: 1; color: #D96000;">确认焚毁</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-container" class="glass-3d" style="background: rgba(255,255,255,0.15);">
+        <div id="header">
+            <div class="logo-3d-mini text-black-gold">
+                <img src="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png" class="cute-sun-mini" alt="太阳">
+                有点儿意思
+            </div>
+            <div id="user-info" class="header-user-badge"></div>
+        </div>
+        
+        <div id="announcement-bar"></div>
+        <div id="messages"></div>
+        
+        <div id="bottom-wrapper">
+            <div id="action-menu">
+                <div class="glass-btn icon-btn" id="open-emoji-btn" title="表情包">😊</div>
+                <div class="glass-btn icon-btn" id="send-img-btn" title="发送图片">📷</div>
+                <div class="glass-btn icon-btn" id="announce-btn" title="发布公告">📢</div>
+                <div class="glass-btn icon-btn" id="fullscreen-btn" title="全屏输入">⛶</div>
+                <div class="glass-btn icon-btn" id="burn-btn" title="焚毁清屏" style="color: #D96000;">🔥</div>
+            </div>
+            
+            <div id="emoji-panel"></div>
+
+            <div id="input-area">
+                <div class="glass-btn icon-btn" id="toggle-menu-btn" style="font-size: 24px; font-weight: 300;">+</div>
+                <textarea id="msg-input" maxlength="3000" placeholder="发送奇思妙想..." rows="1"></textarea>
+                <div class="glass-btn" id="send-btn">发送</div>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
         </div>
     </div>
 
     <script>
-        // --- 核心全局变量 ---
-        let currentRoom = null;
-        let tempUserId = 'User_' + Math.random().toString(36).substr(2, 6);
-        let destructTimeMs = (12 * 60 * 60 * 1000) + (60 * 1000); // 12小时零1分钟
+        const manifestData = {
+            "name": "有点儿意思", "short_name": "有点儿意思", "start_url": window.location.href.split('?')[0], "display": "standalone",
+            "background_color": "#FFB703", "theme_color": "#FFB703",
+            "icons": [{
+                "src": "https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png",
+                "sizes": "192x192", "type": "image/png", "purpose": "any maskable"
+            }, {
+                "src": "https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/512x512/1f31e.png",
+                "sizes": "512x512", "type": "image/png", "purpose": "any maskable"
+            }]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/manifest+json' });
+        document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
 
-        // --- 页面加载启动 ---
-        window.addEventListener('DOMContentLoaded', () => {
-            initSystem();
-        });
+        const swCode = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(clients.claim())); self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response("Offline"))));`;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{})); }
 
-        // 核心功能 1：URL净化与房间初始化
-        function initSystem() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let urlRoom = urlParams.get('room') || window.location.hash.substring(1);
+        let deferredPrompt; window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-btn').style.display = 'flex'; });
+        document.getElementById('install-btn').addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('install-btn').style.display = 'none'; } deferredPrompt = null; } });
+        window.addEventListener('appinstalled', () => { alert("🎉 应用已成功安装！"); document.getElementById('install-btn').style.display = 'none'; });
 
-            if (urlRoom) {
-                // 瞬间将参数锁入本地存储
-                localStorage.setItem('blackgold_secure_room', urlRoom);
-                // 魔法净化：清理地址栏，让苹果主屏幕只能抓取到根域名
-                window.history.replaceState(null, null, window.location.pathname);
-                currentRoom = urlRoom;
-            } else {
-                // 如果地址栏是干净的，尝试从本地读取
-                currentRoom = localStorage.getItem('blackgold_secure_room');
-            }
-
-            if (currentRoom) {
-                startSecureSession();
-            } else {
-                document.getElementById('room-modal').style.display = 'flex';
-            }
-            
-            // 启动自毁倒计时
-            startDestructTimer();
-            // 防止iOS拉伸导致的失焦问题
-            setupKeyboardFix();
+        const SYSTEM_PEPPER = "SunChat_E2EE_V28_SuperSecure_Pepper_@2026!"; 
+        const LIFESPAN_MS = (12 * 60 * 60 * 1000) + (1 * 60 * 1000); 
+        
+        let roomID = new URLSearchParams(window.location.search).get('room');
+        if (!roomID) {
+            roomID = Array.from(window.crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, '0')).join('');
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?room=' + roomID;
+            window.history.replaceState({path: newUrl}, '', newUrl);
         }
+        const TOPIC = "sun-e2ee-room-" + roomID; 
+        const TOPIC_ANNOUNCE = TOPIC + "-announce";
+        const TOPIC_HISTORY = TOPIC + "-history";
 
-        function joinManualRoom() {
-            const val = document.getElementById('manual-room-input').value.trim();
-            if (val) {
-                currentRoom = val;
-                localStorage.setItem('blackgold_secure_room', val);
-                document.getElementById('room-modal').style.display = 'none';
-                startSecureSession();
-            }
-        }
+        const IdentityEngine = {
+            adjs: ["摸鱼的", "熬夜的", "干饭的", "迷糊的", "傲娇的", "打工的", "快乐的", "神奇的", "暴富的", "躺平的", "吃瓜的", "硬核的"],
+            nouns: ["吗喽", "卡皮巴拉", "修勾", "小猫咪", "水豚", "黄油小熊", "草莓熊", "小海豹", "树懒", "豚鼠", "帕恰狗", "柴犬"],
+            emojis: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐻‍❄️', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐧', '🐦', '🐤', '🦆', '🦉', '🐢', '🐬', '🐳', '🦭', '🐅', '🐘', '🐎', '🐖', '🐑', '🦙', '🦌', '🐈', '🦩', '🕊', '🐇', '🦦', '🦥'],
+            gradients: ['linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'],
+            generate() { return { name: `${this.adjs[Math.floor(Math.random() * this.adjs.length)]}${this.nouns[Math.floor(Math.random() * this.nouns.length)]}_${Math.floor(Math.random() * 99) + 1}`, avatarEmoji: this.emojis[Math.floor(Math.random() * this.emojis.length)], avatarColor: this.gradients[Math.floor(Math.random() * this.gradients.length)] }; },
+            deriveFromName(nameStr) { let hash = 0; for(let i = 0; i < nameStr.length; i++) hash = nameStr.charCodeAt(i) + ((hash << 5) - hash); return { avatarEmoji: this.emojis[Math.abs(hash) % this.emojis.length], avatarColor: this.gradients[Math.abs(hash) % this.gradients.length] }; }
+        };
+        
+        const StickerLibrary = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐻‍❄️', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐧', '🐦', '🐤', '🦆', '🦉', '🐢', '🐬', '🐳', '🦭', '🐅', '🐘', '🐎', '🐖', '🐑', '🦙', '🦌', '🐈', '🦩', '🕊', '🐇', '🦦', '🦥', '👋', '🤚', '🖐', '✋', '🖖', '👌', '👈', '👉', '👆', '👇', '☝️', '👍', '👏', '🙌', '👐', '🤲', '🤝', '🙏'];
+        
+        function initEmojiPanel() { document.getElementById('emoji-panel').innerHTML = StickerLibrary.map(emoji => `<div class="emoji-item" onclick="sendEncryptedPacket('sticker', '${emoji}', false); document.getElementById('emoji-panel').style.display='none';">${emoji}</div>`).join(''); }
+        initEmojiPanel();
 
-        function startSecureSession() {
-            appendSysMessage("成功接入保密频道: " + currentRoom);
-            appendSysMessage("临时身份已生成: " + tempUserId);
-            appendSysMessage("系统已就绪。所有信息将于12小时后物理销毁。");
-        }
+        const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
+        
+        msgInput.addEventListener('input', function() { this.style.height = '48px'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
 
-        // 核心功能 2：公告按钮密码门控
-        function handleAnnouncement() {
-            const pwd = prompt("请输入管理权限密码：");
-            if (pwd === "5214") {
-                const announcement = prompt("权限验证通过。请输入要发布的公告内容：");
-                if (announcement) {
-                    appendSysMessage("【系统公告】 " + announcement);
-                    // 这里可以加入将公告同步给其他用户的逻辑
-                }
-            } else if (pwd !== null) {
-                alert("密码错误，拒绝访问。");
-            }
-        }
-
-        // 核心功能 3：12小时零1分自毁机制
-        function startDestructTimer() {
-            // 记录初始启动时间，存入 session 保证刷新不重置（除非重新建立连接）
-            let startTime = sessionStorage.getItem('bg_start_time');
-            if (!startTime) {
-                startTime = Date.now();
-                sessionStorage.setItem('bg_start_time', startTime);
-            }
-
-            const timerEl = document.getElementById('destruct-timer');
-            
-            setInterval(() => {
-                const elapsed = Date.now() - parseInt(startTime);
-                const remaining = destructTimeMs - elapsed;
-
-                if (remaining <= 0) {
-                    executeSelfDestruct();
-                } else {
-                    const h = Math.floor(remaining / (1000 * 60 * 60));
-                    const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-                    const s = Math.floor((remaining % (1000 * 60)) / 1000);
-                    timerEl.innerText = `通道存活时间: ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                }
-            }, 1000);
-        }
-
-        function executeSelfDestruct() {
-            localStorage.removeItem('blackgold_secure_room');
-            sessionStorage.removeItem('bg_start_time');
-            document.body.innerHTML = '<div style="color:#FF6B6B; display:flex; height:100dvh; align-items:center; justify-content:center; font-size:1.5rem; text-shadow:0 0 10px #FF6B6B;">安全协议触发，当前会话已彻底销毁。</div>';
-        }
-
-        // --- 基础发信UI与交互优化 ---
-        function sendMessage() {
-            const input = document.getElementById('msg-input');
-            const text = input.value.trim();
-            if (text) {
-                // 显示自己的消息
-                appendMessage(text, 'msg-mine');
-                input.value = '';
-                
-                // 这里接入你的 WebRTC 或 WebSocket 发送逻辑
-                // sendToNetwork(text);
-                
-                // 模拟对方回复（开发测试用，可删除）
-                setTimeout(() => {
-                    appendMessage("收到信息。", 'msg-other');
-                }, 1000);
-            }
-        }
-
-        // 监听回车发送
-        document.getElementById('msg-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // 滚动到底部
-        function scrollToBottom() {
-            const box = document.getElementById('chat-box');
-            box.scrollTop = box.scrollHeight;
-        }
-
-        function appendMessage(text, className) {
-            const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.className = 'message ' + className;
-            div.innerText = text;
-            box.appendChild(div);
-            scrollToBottom();
-        }
-
-        function appendSysMessage(text) {
-            appendMessage(text, 'msg-sys');
-        }
-
-        // 修复 iOS 键盘收起后页面留白的 bug
-        function setupKeyboardFix() {
-            const inputElements = document.querySelectorAll('input, textarea');
-            inputElements.forEach((el) => {
-                el.addEventListener('blur', () => {
-                    setTimeout(() => {
-                        window.scrollTo(0, 0);
-                    }, 100);
-                });
+        // --- 核心优化：智能虚拟键盘遮挡对策与尺寸自适应 ---
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                const container = document.getElementById('chat-container');
+                // 当键盘弹出时，视口高度变小，强制将聊天容器高度拉伸匹配键盘上方的真实高度
+                container.style.height = window.visualViewport.height + 'px';
+                window.scrollTo(0, 0);
             });
         }
+
+        toggleMenuBtn.addEventListener('click', () => {
+            actionMenu.classList.toggle('active');
+            if (actionMenu.classList.contains('active')) { toggleMenuBtn.style.transform = 'rotate(45deg)'; document.getElementById('emoji-panel').style.display = 'none'; } 
+            else { toggleMenuBtn.style.transform = 'rotate(0deg)'; }
+        });
+
+        document.getElementById('open-emoji-btn').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; const panel = document.getElementById('emoji-panel'); panel.style.display = panel.style.display === 'grid' ? 'none' : 'grid'; });
+        document.getElementById('messages').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; document.getElementById('emoji-panel').style.display = 'none'; });
+
+        document.getElementById('fullscreen-btn').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; const fsOverlay = document.getElementById('fullscreen-input-overlay'); const fsTextarea = document.getElementById('fullscreen-textarea'); fsTextarea.value = msgInput.value; fsOverlay.style.display = 'flex'; fsTextarea.focus(); });
+        function closeFullscreenInput() { document.getElementById('fullscreen-input-overlay').style.display = 'none'; }
+        function sendFullscreenText() { const text = document.getElementById('fullscreen-textarea').value.trim(); if(text) { sendEncryptedPacket('text', text, false); } closeFullscreenInput(); msgInput.value = ''; msgInput.style.height = '48px'; }
+
+        window.showImage = function(src) { const overlay = document.getElementById('lightbox-overlay'); document.getElementById('lightbox-img').src = src; overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('active'), 10); };
+
+        const CryptoService = {
+            key: null,
+            async initKey(shortPassword) {
+                const enc = new TextEncoder(); const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(shortPassword + SYSTEM_PEPPER), { name: "PBKDF2" }, false, ["deriveKey"]);
+                this.key = await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode(roomID), iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+            },
+            async encrypt(text) { const enc = new TextEncoder(); const iv = window.crypto.getRandomValues(new Uint8Array(12)); const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, this.key, enc.encode(text)); return JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) }); },
+            async decrypt(payloadStr) { try { const payload = JSON.parse(payloadStr); const iv = new Uint8Array(payload.iv); const data = new Uint8Array(payload.data); const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, this.key, data); return new TextDecoder().decode(decrypted); } catch (e) { return null; } }
+        };
+
+        const StorageService = {
+            async save(messages, announcements) { if (!CryptoService.key) return; localStorage.setItem('sun_secure_vault_' + roomID, await CryptoService.encrypt(JSON.stringify({ msgs: messages, ann: announcements }))); },
+            async load() { const raw = localStorage.getItem('sun_secure_vault_' + roomID); if (!raw) return { msgs: [], ann: [] }; const decryptedStr = await CryptoService.decrypt(raw); if (!decryptedStr) return { msgs: [], ann: [] }; try { return JSON.parse(decryptedStr); } catch(e) { return { msgs: [], ann: [] }; } }
+        };
+
+        let mqttClient; let currentUser; let localMessages = []; let announcements = []; let isUploadingAnnounceImg = false; 
+
+        function notifyNewMessage() {
+            if (document.hidden && typeof Notification !== 'undefined' && Notification.permission === "granted") {
+                const n = new Notification("☀️ 有点儿意思", { 
+                    body: "你有一条好玩的信息，请及时查看。", 
+                    icon: "https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png", 
+                    tag: "sunchat-new-msg" 
+                });
+                n.onclick = function() { window.focus(); this.close(); };
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+        }
+
+        async function initSecureContext() {
+            try {
+                const data = await StorageService.load(); const now = Date.now();
+                localMessages = (data.msgs || []).filter(m => now - m.timestamp < LIFESPAN_MS); announcements = (data.ann || []).filter(a => now - a.timestamp < LIFESPAN_MS);
+                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp)); renderAnnouncements();
+            } catch(e) {}
+        }
+
+        async function syncToStorage() { if(localMessages.length > 150) localMessages = localMessages.slice(-150); await StorageService.save(localMessages, announcements); }
+
+        function updateCountdowns() {
+            const now = Date.now(); let needsSync = false;
+            document.querySelectorAll('.time-tracker').forEach(el => {
+                const ts = parseInt(el.getAttribute('data-ts')); const diff = (ts + LIFESPAN_MS) - now;
+                if (diff <= 0) { const parentRow = el.closest('.msg-row, .msg-sys, .announce-item'); if(parentRow) parentRow.remove(); needsSync = true; } 
+                else { const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); el.innerText = `⏳ 剩 ${h}h ${m}m`; }
+            });
+            if(needsSync) cleanExpiredData();
+        }
+        setInterval(updateCountdowns, 10000);
+
+        async function cleanExpiredData() {
+            const now = Date.now(); const initMsgLen = localMessages.length; const initAnnLen = announcements.length;
+            localMessages = localMessages.filter(m => now - m.timestamp < LIFESPAN_MS); announcements = announcements.filter(a => now - a.timestamp < LIFESPAN_MS);
+            if(localMessages.length !== initMsgLen || announcements.length !== initAnnLen) { await syncToStorage(); renderAnnouncements(); }
+        }
+
+        const authOverlay = document.getElementById('auth-overlay'); const pwdInput = document.getElementById('pwd-input'); const pwdBtn = document.getElementById('pwd-btn');
+
+        async function verifyAndEnter() {
+            const pwd = pwdInput.value.trim();
+            if (!pwd) { pwdInput.placeholder = '密码不可为空'; setTimeout(() => pwdInput.placeholder = '请输入访问密钥', 1500); return; }
+            pwdBtn.innerText = "进入中..."; 
+            
+            if (typeof Notification !== 'undefined' && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+
+            await CryptoService.initKey(pwd); currentUser = IdentityEngine.generate();
+            authOverlay.style.display = 'none'; document.getElementById('chat-container').style.display = 'flex';
+            
+            document.getElementById('user-info').innerHTML = `<div style="width: 28px; height: 28px; font-size: 16px; background: ${currentUser.avatarColor}; border-radius: 50%; display: flex; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 2px 6px rgba(0,0,0,0.1); text-shadow:none;">${currentUser.avatarEmoji}</div> ${currentUser.name}`;
+            
+            await initSecureContext(); connectMQTT(); updateCountdowns();
+        }
+
+        pwdBtn.addEventListener('click', verifyAndEnter); pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAndEnter(); });
+
+        const adminOverlay = document.getElementById('admin-overlay'); const adminPwdInput = document.getElementById('admin-pwd-input'); const adminTextInput = document.getElementById('admin-text-input');
+        
+        document.getElementById('announce-btn').addEventListener('click', () => { 
+            actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)';
+            adminOverlay.style.display = 'flex'; adminPwdInput.focus(); 
+        });
+        function checkAdminPwd() { if (adminPwdInput.value.trim() !== "5214") { alert("只有管理员才可以发布"); adminPwdInput.value = ''; return false; } return true; }
+
+        document.getElementById('admin-confirm-text-btn').addEventListener('click', () => {
+            if (!checkAdminPwd()) return; const text = adminTextInput.value.trim(); if (!text) return alert("请先在上方输入文字内容");
+            adminOverlay.style.display = 'none'; adminPwdInput.value = ''; adminTextInput.value = ''; sendEncryptedPacket('text', text, true);
+        });
+
+        document.getElementById('admin-confirm-img-btn').addEventListener('click', () => {
+            if (!checkAdminPwd()) return; adminOverlay.style.display = 'none'; adminPwdInput.value = ''; adminTextInput.value = '';
+            isUploadingAnnounceImg = true; document.getElementById('file-input').click();
+        });
+
+        document.getElementById('burn-btn').addEventListener('click', () => {
+            actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)';
+            document.getElementById('burn-pwd-input').value = '';
+            document.getElementById('burn-overlay').style.display = 'flex';
+            document.getElementById('burn-pwd-input').focus();
+        });
+
+        document.getElementById('burn-confirm-btn').addEventListener('click', () => {
+            const pwd = document.getElementById('burn-pwd-input').value.trim();
+            if (pwd !== "5214") {
+                alert("管理员密码错误，无法执行焚毁。");
+                document.getElementById('burn-pwd-input').value = '';
+                return;
+            }
+            document.getElementById('burn-overlay').style.display = 'none';
+            localMessages = [];
+            document.getElementById('messages').innerHTML = '';
+            syncToStorage();
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.publish(TOPIC_HISTORY, "", { retain: true });
+            }
+            appendSysMessage('系统', '🔥 所有记录已彻底焚毁。');
+        });
+
+        function connectMQTT() {
+            appendSysMessage('系统', '正在连接隐秘通道...');
+            mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { clientId: 'sun_' + Math.random().toString(16).substr(2, 8) });
+            mqttClient.on('connect', () => { 
+                appendSysMessage('系统', '✨ 已建立私密直连。信息将于12小时后自动粉碎。'); 
+                mqttClient.subscribe(TOPIC); 
+                mqttClient.subscribe(TOPIC_ANNOUNCE); 
+                mqttClient.subscribe(TOPIC_HISTORY); 
+            });
+
+            mqttClient.on('message', async (topic, message) => {
+                try {
+                    if (topic === TOPIC_HISTORY && message.length === 0) return;
+
+                    const wrapper = JSON.parse(message.toString()); const decryptedData = await CryptoService.decrypt(wrapper.encryptedPayload); if (!decryptedData) return;
+                    const payload = JSON.parse(decryptedData); if (Date.now() - payload.timestamp >= LIFESPAN_MS) return;
+
+                    if (topic === TOPIC_HISTORY) {
+                        if (payload.type === 'history_list') {
+                            let added = false;
+                            payload.content.forEach(remoteMsg => {
+                                const exists = localMessages.some(m => m.timestamp === remoteMsg.timestamp && m.senderData.name === remoteMsg.senderData.name);
+                                if (!exists && (Date.now() - remoteMsg.timestamp < LIFESPAN_MS)) {
+                                    localMessages.push(remoteMsg); added = true;
+                                }
+                            });
+                            if (added) {
+                                localMessages.sort((a,b) => a.timestamp - b.timestamp);
+                                document.getElementById('messages').innerHTML = ''; 
+                                localMessages.forEach(m => renderMessage(m.type, m.senderData, m.content, m.timestamp));
+                                syncToStorage();
+                            }
+                        }
+                        return;
+                    }
+
+                    if (topic === TOPIC_ANNOUNCE) { if (payload.type === 'announce_list') { announcements = payload.content; await syncToStorage(); renderAnnouncements(); notifyNewMessage();} return; }
+                    if (wrapper.senderData && wrapper.senderData.name === currentUser.name) return; 
+                    
+                    let senderInfo = wrapper.senderData;
+                    if (!senderInfo || typeof senderInfo === 'string') {
+                        const sName = typeof senderInfo === 'string' ? senderInfo : (wrapper.sender || "神秘人");
+                        const derived = IdentityEngine.deriveFromName(sName);
+                        senderInfo = { name: sName, avatarEmoji: derived.avatarEmoji, avatarColor: derived.avatarColor };
+                    }
+                    localMessages.push({ type: payload.type, senderData: senderInfo, content: payload.content, timestamp: payload.timestamp });
+                    await syncToStorage(); renderMessage(payload.type, senderInfo, payload.content, payload.timestamp);
+                    notifyNewMessage(); 
+                } catch (error) {}
+            });
+        }
+
+        async function sendEncryptedPacket(type, content, isAnnounce = false) {
+            if (!mqttClient || !mqttClient.connected) return alert("网络连接异常"); const ts = Date.now();
+            if (isAnnounce) {
+                announcements.push({ type: type, content: content, senderData: currentUser, timestamp: ts });
+                if (announcements.length > 3) announcements.shift(); await syncToStorage(); renderAnnouncements();
+                const internalPayload = JSON.stringify({ type: 'announce_list', content: announcements, timestamp: ts });
+                const encryptedPayload = await CryptoService.encrypt(internalPayload);
+                mqttClient.publish(TOPIC_ANNOUNCE, JSON.stringify({ senderData: currentUser, encryptedPayload }), { retain: true });
+                appendSysMessage('系统', '📢 已发布公告');
+            } else {
+                localMessages.push({ type: type, senderData: currentUser, content: content, timestamp: ts });
+                await syncToStorage(); renderMessage(type, currentUser, content, ts); 
+                const internalPayload = JSON.stringify({ type: type, content: content, timestamp: ts });
+                const encryptedPayload = await CryptoService.encrypt(internalPayload);
+                mqttClient.publish(TOPIC, JSON.stringify({ senderData: currentUser, encryptedPayload }));
+                
+                const historyPayload = JSON.stringify({ type: 'history_list', content: localMessages, timestamp: ts });
+                const encryptedHistory = await CryptoService.encrypt(historyPayload);
+                mqttClient.publish(TOPIC_HISTORY, JSON.stringify({ senderData: currentUser, encryptedPayload: encryptedHistory }), { retain: true });
+            }
+        }
+
+        function sendText(isAnnounce = false) { const text = msgInput.value.trim(); if (!text) return; msgInput.value = ''; msgInput.style.height = '48px'; sendEncryptedPacket('text', text, isAnnounce); }
+
+        document.getElementById('send-img-btn').addEventListener('click', () => { actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)'; isUploadingAnnounceImg = false; document.getElementById('file-input').click(); });
+
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
+                    if (w > 1200) { h = Math.round((h * 1200) / w); w = 1200; } 
+                    canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    sendEncryptedPacket('image', canvas.toDataURL('image/jpeg', 0.6), isUploadingAnnounceImg); isUploadingAnnounceImg = false; 
+                }; img.src = event.target.result;
+            }; reader.readAsDataURL(file); e.target.value = ''; 
+        });
+
+        function appendSysMessage(sender, text) {
+            const container = document.getElementById('messages'); const div = document.createElement('div'); div.className = `msg-sys`; div.innerText = text;
+            container.appendChild(div); container.scrollTop = container.scrollHeight;
+        }
+
+        function renderMessage(type, senderData, content, timestamp) {
+            const container = document.getElementById('messages');
+            const isSelf = senderData.name === currentUser.name; const sName = senderData.name; const sEmoji = senderData.avatarEmoji || '❓'; const sColor = senderData.avatarColor || '#ccc';
+            const msgRow = document.createElement('div'); msgRow.className = `msg-row ${isSelf ? 'msg-row-self' : ''}`;
+            
+            const safeContent = type === 'text' ? content.replace(/</g, "&lt;").replace(/\n/g, "<br>") : ''; 
+            
+            let msgBodyHtml; let bubbleClass = isSelf ? 'msg-self' : 'msg-other';
+            if (type === 'sticker') { msgBodyHtml = content; bubbleClass += ' msg-sticker'; } 
+            else if (type === 'text') { msgBodyHtml = safeContent; } 
+            else { msgBodyHtml = `<img class="msg-img" src="${content}" onclick="showImage(this.src)">`; } 
+            
+            msgRow.innerHTML = `
+                <div class="msg-avatar" style="background: ${sColor}; text-shadow:none;">${sEmoji}</div>
+                <div class="msg-body ${isSelf ? 'msg-body-self' : 'msg-body-other'}">
+                    <span class="msg-sender">${sName}</span>
+                    <div class="msg-content-row">
+                        ${isSelf ? `<span class="countdown-timer time-tracker" data-ts="${timestamp}"></span>` : ''}
+                        <div class="message ${bubbleClass}">${msgBodyHtml}</div>
+                        ${!isSelf ? `<span class="countdown-timer time-tracker" data-ts="${timestamp}"></span>` : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(msgRow); requestAnimationFrame(() => container.scrollTop = container.scrollHeight); updateCountdowns(); 
+        }
+
+        function renderAnnouncements() {
+            const bar = document.getElementById('announcement-bar'); if (announcements.length === 0) { bar.style.display = 'none'; return; } bar.style.display = 'flex';
+            bar.innerHTML = announcements.map(a => {
+                const isImage = a.type === 'image'; const contentHtml = isImage ? `<img class="announce-img" src="${a.content}" onclick="showImage(this.src)">` : (a.content || a.text || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
+                return `<div class="announce-item"><span class="announce-badge">📢</span><div class="announce-content">${contentHtml}</div><span class="countdown-timer time-tracker" data-ts="${a.timestamp}"></span></div>`;
+            }).join(''); updateCountdowns();
+        }
+
+        document.getElementById('send-btn').addEventListener('click', () => sendText(false));
+        document.getElementById('msg-input').addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(false); }
+        });
     </script>
 </body>
 </html>
