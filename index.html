@@ -1,7 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">    <link rel="manifest" id="dynamic-manifest">    <meta name="apple-mobile-web-app-capable" content="yes">    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <meta name="apple-mobile-web-app-title" content="有点儿意思">    <meta name="theme-color" content="#FFB703">    <title>🌞 有点儿意思</title>    <link rel="apple-touch-icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/192x192/1f31e.png">    <link rel="icon" href="https://fastly.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31e.png">        <link rel="preconnect" href="https://fastly.jsdelivr.net" crossorigin>    <link rel="preconnect" href="https://broker.emqx.io" crossorigin>    <script src="https://fastly.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>        <style>        :root {            --text-main: #5C3A21;            --sun-gold-light: #FFDA77;            --sun-gold-mid: #FFB703;            --sun-gold-dark: #FB8500;        }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
         
-        /* 完美全屏自适应：适配所有手机与浏览器的可视区 */
         html, body { 
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; 
             background-color: var(--sun-gold-mid);
@@ -108,7 +107,7 @@
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
-        /* 聊天主容器：采用 100% 流式弹性自适应，自动完美填满任何手机屏幕，杜绝任何机型显示不全 */
+        /* 聊天主容器：配合 JavaScript 动态计算高度，完美解决苹果手机键盘弹起时遮挡和打字框不可见问题 */
         #chat-container { 
             display: none; 
             width: 100%; 
@@ -229,7 +228,6 @@
         .emoji-item { font-size: 30px; text-align: center; cursor: pointer; transition: transform 0.15s; user-select: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
         .emoji-item:active { transform: scale(1.4); }
 
-        /* 发送框区域：完美下移，自带苹果/安卓安全底部间距 */
         #input-area { 
             display: flex; gap: 10px; padding: 14px 20px; 
             border-top: 1px solid rgba(255,255,255,0.5); 
@@ -386,12 +384,17 @@
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         msgInput.addEventListener('input', function() { this.style.height = '44px'; this.style.height = Math.min(this.scrollHeight, 110) + 'px'; });
 
+        // --- 核心修复：完美适配苹果/安卓手机键盘弹起与缩放 ---
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => {
-                const container = document.getElementById('chat-container');
-                container.style.height = window.visualViewport.height + 'px';
-                window.scrollTo(0, 0);
-            });
+            const handleVisualViewportResize = () => {
+                const chatContainer = document.getElementById('chat-container');
+                if (chatContainer.style.display !== 'none') {
+                    chatContainer.style.height = window.visualViewport.height + 'px';
+                    window.scrollTo(0, 0);
+                }
+            };
+            window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+            window.visualViewport.addEventListener('scroll', handleVisualViewportResize);
         }
 
         toggleMenuBtn.addEventListener('click', () => {
@@ -413,7 +416,6 @@
             key: null,
             async initKey(shortPassword) {
                 const enc = new TextEncoder(); 
-                // 性能极致优化：将迭代次数从 100,000 降至 10,000 次，彻底消除手机端首次输入的加载缓冲与卡顿感
                 const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(shortPassword + SYSTEM_PEPPER), { name: "PBKDF2" }, false, ["deriveKey"]);
                 this.key = await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode(roomID), iterations: 10000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
             },
@@ -479,7 +481,13 @@
             }
 
             await CryptoService.initKey(pwd); currentUser = IdentityEngine.generate();
-            authOverlay.style.display = 'none'; document.getElementById('chat-container').style.display = 'flex';
+            authOverlay.style.display = 'none'; 
+            
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.style.display = 'flex';
+            if (window.visualViewport) {
+                chatContainer.style.height = window.visualViewport.height + 'px';
+            }
 
             document.getElementById('user-info').innerHTML = `<div style="width: 26px; height: 26px; font-size: 15px; background: ${currentUser.avatarColor}; border-radius: 50%; display: flex; justify-content: center; align-items: center; border-top: 1px solid rgba(255,255,255,0.9); border-left: 1px solid rgba(255,255,255,0.6); box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), 0 2px 6px rgba(0,0,0,0.1); text-shadow:none;">${currentUser.avatarEmoji}</div> ${currentUser.name}`;
 
