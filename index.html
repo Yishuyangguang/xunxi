@@ -102,12 +102,11 @@
         .btn-cancel { background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%); font-weight: 500; }
         .btn-img-announce { background: linear-gradient(135deg, rgba(255, 140, 0, 0.7) 0%, rgba(255, 90, 0, 0.3) 100%); border-top-color: rgba(255,200,100,0.9); color: #fff; }
 
-        #admin-overlay, #burn-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        #admin-overlay, #burn-overlay, #del-announce-overlay { display: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .auth-card-modal { max-width: 420px; padding: 40px 30px; }
         .close-btn { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 16px; background: rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: var(--text-main); border: 1px solid rgba(255,255,255,0.5); }
         .close-btn:active { background: rgba(255,255,255,0.5); }
 
-        /* 聊天主容器：配合 JavaScript 动态计算高度，完美解决苹果手机键盘弹起时遮挡和打字框不可见问题 */
         #chat-container { 
             display: none; 
             width: 100%; 
@@ -148,7 +147,8 @@
             border-top: 1px solid rgba(255, 215, 0, 0.4);
             border-left: 1px solid rgba(255, 215, 0, 0.3);
         }
-        .announce-item { font-size: 14px; color: #FFECA1; opacity: 0.98; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .announce-item { font-size: 14px; color: #FFECA1; opacity: 0.98; display: flex; justify-content: space-between; align-items: flex-start; line-height: 1.6; text-shadow: 0 1px 2px rgba(0,0,0,0.8); cursor: pointer; }
+        .announce-item:hover { opacity: 1; background: rgba(255,255,255,0.05); border-radius: 8px; }
         .announce-badge { font-weight: bold; margin-right: 8px; color: #FFB703; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));}
         .announce-content { flex: 1; word-break: break-all; display: flex; flex-direction: column; color: #FFF8DC; }
         .announce-img { max-width: 100%; border-radius: 12px; margin-top: 8px; border: 1px solid rgba(255, 215, 0, 0.5); box-shadow: 0 6px 16px rgba(0,0,0,0.4); cursor: zoom-in;}
@@ -294,6 +294,18 @@
             </div>
         </div>
     </div>
+    <div id="del-announce-overlay" class="overlay" style="display: none;">
+        <div class="auth-card glass-3d auth-card-modal">
+            <div class="close-btn" onclick="document.getElementById('del-announce-overlay').style.display='none'">×</div>
+            <h3 style="margin: 0 0 20px 0; color: #D96000; text-shadow: 0 1px 2px rgba(255,255,255,0.8);">🗑️ 删除置顶公告</h3>
+            <p id="del-announce-info" style="margin-bottom: 20px; font-size: 13px; text-align: center; color: var(--text-main); opacity: 0.9; word-break: break-all;"></p>
+            <input type="password" id="del-announce-pwd" class="glass-input" placeholder="输入管理员密码 (5214)" autocomplete="off" style="margin-bottom: 25px;">
+            <div class="btn-group">
+                <button class="glass-btn btn-cancel" style="flex: 1;" onclick="document.getElementById('del-announce-overlay').style.display='none'">取消</button>
+                <button id="del-announce-confirm-btn" class="glass-btn" style="flex: 1; color: #D96000;">确认删除</button>
+            </div>
+        </div>
+    </div>
     <div id="burn-overlay" class="overlay" style="display: none;">
         <div class="auth-card glass-3d auth-card-modal">
             <div class="close-btn" onclick="document.getElementById('burn-overlay').style.display='none'">×</div>
@@ -384,17 +396,18 @@
         const toggleMenuBtn = document.getElementById('toggle-menu-btn'); const actionMenu = document.getElementById('action-menu'); const msgInput = document.getElementById('msg-input');
         msgInput.addEventListener('input', function() { this.style.height = '44px'; this.style.height = Math.min(this.scrollHeight, 110) + 'px'; });
 
-        // --- 核心修复：完美适配苹果/安卓手机键盘弹起与缩放 ---
+        // --- 核心修复：针对苹果手机打字下沉问题的绝对防止位移锁定 ---
         if (window.visualViewport) {
-            const handleVisualViewportResize = () => {
+            const handleViewportChange = () => {
                 const chatContainer = document.getElementById('chat-container');
                 if (chatContainer.style.display !== 'none') {
+                    // 仅锁定高度匹配视口，禁止 body 发生任何滚动下沉
                     chatContainer.style.height = window.visualViewport.height + 'px';
                     window.scrollTo(0, 0);
                 }
             };
-            window.visualViewport.addEventListener('resize', handleVisualViewportResize);
-            window.visualViewport.addEventListener('scroll', handleVisualViewportResize);
+            window.visualViewport.addEventListener('resize', handleViewportChange);
+            window.visualViewport.addEventListener('scroll', handleViewportChange);
         }
 
         toggleMenuBtn.addEventListener('click', () => {
@@ -514,6 +527,44 @@
             isUploadingAnnounceImg = true; document.getElementById('file-input').click();
         });
 
+        // --- 新增：删除单个置顶公告功能 ---
+        let targetAnnounceIndexToDelete = null;
+        function promptDeleteAnnouncement(index) {
+            targetAnnounceIndexToDelete = index;
+            const targetAnn = announcements[index];
+            let previewText = targetAnn.type === 'image' ? '[图片公告]' : targetAnn.content;
+            if (previewText.length > 30) previewText = previewText.substring(0, 30) + '...';
+            document.getElementById('del-announce-info').innerText = `确定要删除这条公告吗？\n“${previewText}”`;
+            document.getElementById('del-announce-pwd').value = '';
+            document.getElementById('del-announce-overlay').style.display = 'flex';
+            document.getElementById('del-announce-pwd').focus();
+        }
+
+        document.getElementById('del-announce-confirm-btn').addEventListener('click', async () => {
+            const pwd = document.getElementById('del-announce-pwd').value.trim();
+            if (pwd !== "5214") {
+                alert("管理员密码错误");
+                document.getElementById('del-announce-pwd').value = '';
+                return;
+            }
+            if (targetAnnounceIndexToDelete !== null && announcements[targetAnnounceIndexToDelete]) {
+                announcements.splice(targetAnnounceIndexToDelete, 1);
+                targetAnnounceIndexToDelete = null;
+                document.getElementById('del-announce-overlay').style.display = 'none';
+                await syncToStorage();
+                renderAnnouncements();
+
+                // 同步广播删除后的公告列表
+                const ts = Date.now();
+                const internalPayload = JSON.stringify({ type: 'announce_list', content: announcements, timestamp: ts });
+                const encryptedPayload = await CryptoService.encrypt(internalPayload);
+                if (mqttClient && mqttClient.connected) {
+                    mqttClient.publish(TOPIC_ANNOUNCE, JSON.stringify({ senderData: currentUser, encryptedPayload }), { retain: true });
+                }
+                appendSysMessage('系统', '🗑️ 已删除指定公告');
+            }
+        });
+
         document.getElementById('burn-btn').addEventListener('click', () => {
             actionMenu.classList.remove('active'); toggleMenuBtn.style.transform = 'rotate(0deg)';
             document.getElementById('burn-pwd-input').value = '';
@@ -530,12 +581,15 @@
             }
             document.getElementById('burn-overlay').style.display = 'none';
             localMessages = [];
+            announcements = [];
             document.getElementById('messages').innerHTML = '';
+            renderAnnouncements();
             syncToStorage();
             if (mqttClient && mqttClient.connected) {
                 mqttClient.publish(TOPIC_HISTORY, "", { retain: true });
+                mqttClient.publish(TOPIC_ANNOUNCE, "", { retain: true });
             }
-            appendSysMessage('系统', '🔥 所有记录已彻底焚毁。');
+            appendSysMessage('系统', '🔥 所有记录及公告已彻底焚毁。');
         });
 
         function connectMQTT() {
@@ -661,9 +715,9 @@
 
         function renderAnnouncements() {
             const bar = document.getElementById('announcement-bar'); if (announcements.length === 0) { bar.style.display = 'none'; return; } bar.style.display = 'flex';
-            bar.innerHTML = announcements.map(a => {
+            bar.innerHTML = announcements.map((a, idx) => {
                 const isImage = a.type === 'image'; const contentHtml = isImage ? `<img class="announce-img" src="${a.content}" onclick="showImage(this.src)">` : (a.content || a.text || "").replace(/</g, "&lt;").replace(/\n/g, "<br>");
-                return `<div class="announce-item"><span class="announce-badge">📢</span><div class="announce-content">${contentHtml}</div><span class="countdown-timer time-tracker" data-ts="${a.timestamp}"></span></div>`;
+                return `<div class="announce-item" onclick="promptDeleteAnnouncement(${idx})" title="点击可删除此条公告"><span class="announce-badge">📢</span><div class="announce-content">${contentHtml}</div><span class="countdown-timer time-tracker" data-ts="${a.timestamp}"></span></div>`;
             }).join(''); updateCountdowns();
         }
 
